@@ -1,68 +1,64 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-interface FeaturedArt {
-  id: string;
-  name: string;
-  shortDescription: string;
-  imageUrl: string;
-  price: number;
-}
-
-// Sample featured items for demonstration
-const featuredItems: FeaturedArt[] = [
-  {
-    id: "1",
-    name: "Whispers of Dawn",
-    shortDescription: "A handcrafted canvas capturing the first light breaking through misty mountains",
-    imageUrl: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&h=800&fit=crop",
-    price: 12500,
-  },
-  {
-    id: "2",
-    name: "Sacred Geometry",
-    shortDescription: "Intricate mandala artwork using traditional gold leaf techniques",
-    imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1200&h=800&fit=crop",
-    price: 8900,
-  },
-  {
-    id: "3",
-    name: "Monsoon Melodies",
-    shortDescription: "Watercolor dreams of rain-kissed lotus petals in a village pond",
-    imageUrl: "https://images.unsplash.com/photo-1549887534-1541e9326642?w=1200&h=800&fit=crop",
-    price: 15000,
-  },
-];
+import { useFeaturedProducts } from "@/hooks/useProducts";
 
 const HeroSection = () => {
+  const { data: featuredProducts, isLoading } = useFeaturedProducts();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
+    if (!featuredProducts?.length) return;
+    
     const timer = setInterval(() => {
       setIsAnimating(true);
       setTimeout(() => {
-        setCurrentSlide((prev) => (prev + 1) % featuredItems.length);
+        setCurrentSlide((prev) => (prev + 1) % featuredProducts.length);
         setIsAnimating(false);
       }, 500);
     }, 6000);
 
     return () => clearInterval(timer);
-  }, []);
-
-  const currentArt = featuredItems[currentSlide];
+  }, [featuredProducts?.length]);
 
   const scrollToGallery = () => {
     document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  if (isLoading) {
+    return (
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-espresso">
+        <div className="relative z-10 varnika-container w-full py-32 md:py-40">
+          <div className="max-w-2xl space-y-6">
+            <Skeleton className="h-6 w-32 bg-gold/20" />
+            <Skeleton className="h-20 w-full bg-cream/10" />
+            <Skeleton className="h-16 w-3/4 bg-cream/10" />
+            <Skeleton className="h-6 w-2/3 bg-cream/10" />
+            <div className="flex gap-4 pt-4">
+              <Skeleton className="h-12 w-32 bg-gold/20" />
+              <Skeleton className="h-12 w-40 bg-gold/30" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!featuredProducts?.length) {
+    return null;
+  }
+
+  const currentArt = featuredProducts[currentSlide];
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
-        {featuredItems.map((item, index) => (
+        {featuredProducts.map((item, index) => (
           <div
             key={item.id}
             className={cn(
@@ -127,17 +123,28 @@ const HeroSection = () => {
             style={{ transitionDelay: "300ms" }}
           >
             <span className="font-display text-3xl text-gold">
-              ₹{currentArt.price.toLocaleString("en-IN")}
+              {currentArt.salePrice ? (
+                <>
+                  ₹{currentArt.salePrice.toLocaleString("en-IN")}
+                  <span className="text-lg text-cream/50 line-through ml-3">
+                    ₹{currentArt.regularPrice.toLocaleString("en-IN")}
+                  </span>
+                </>
+              ) : (
+                `₹${currentArt.regularPrice.toLocaleString("en-IN")}`
+              )}
             </span>
-            <Button variant="reserve" size="xl" className="group">
-              Explore This Piece
-              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-            </Button>
+            <Link to={`/product/${currentArt.id}`}>
+              <Button variant="reserve" size="xl" className="group">
+                Explore This Piece
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
           </div>
 
           {/* Slide Indicators */}
           <div className="flex gap-3 mt-12">
-            {featuredItems.map((_, index) => (
+            {featuredProducts.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}

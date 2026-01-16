@@ -15,53 +15,22 @@ import {
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-// Sample product data (would come from API/Google Sheets)
-const product = {
-  id: "1",
-  name: "Whispers of Dawn",
-  shortDescription: "A handcrafted canvas capturing the first light breaking through misty mountains",
-  longDescription: `Every morning tells a different story, and this piece captures one of those magical moments when the sun first peeks over the Himalayan range, painting the world in hues of gold and rose.
-
-Created using traditional oil techniques passed down through three generations, this painting took 47 days to complete. The artist, Meera Devi, works from her studio in Dharamsala, where the very mountains she paints are visible from her window.
-
-The canvas is stretched over a premium teak frame, hand-carved with subtle lotus motifs that only reveal themselves upon close inspection. A certificate of authenticity accompanies each piece, detailing its unique journey from vision to canvas.
-
-This artwork speaks to those who find peace in dawn's quiet moments—the early risers, the dreamers, the ones who understand that some of life's most beautiful experiences happen when most of the world is still asleep.`,
-  brand: "Varnika Originals",
-  modelNumber: "VO-2024-WD-001",
-  category: "Painting",
-  subcategory: "Oil on Canvas",
-  tags: ["Landscape", "Himalayan", "Traditional", "Oil Painting"],
-  color: "Warm Tones",
-  regularPrice: 28500,
-  salePrice: 24500,
-  costPrice: 15000,
-  imageUrl1: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&h=800&fit=crop",
-  imageUrl2: "https://images.unsplash.com/photo-1578926288207-a90a5366759d?w=800&h=600&fit=crop",
-  imageUrl3: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=600&fit=crop",
-  stock: 3,
-  rating: 4.9,
-  reviewCount: 24,
-  customizable: true,
-  featured: true,
-  dimensions: "24 x 36 inches",
-  weight: "2.5 kg (framed)",
-  materials: "Oil on Belgian Linen, Teak Frame",
-  artisan: "Meera Devi",
-  origin: "Dharamsala, Himachal Pradesh",
-};
+import { useProduct } from "@/hooks/useProducts";
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const { data: product, isLoading } = useProduct(id || "");
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
 
-  const images = [product.imageUrl1, product.imageUrl2, product.imageUrl3];
+  const images = product
+    ? [product.imageUrl, product.imageUrl2, product.imageUrl3].filter(Boolean)
+    : [];
 
   const handleReserve = () => {
     toast.success("Piece reserved!", {
@@ -70,11 +39,66 @@ const ProductDetail = () => {
   };
 
   const handleWhatsApp = () => {
+    if (!product) return;
     const message = encodeURIComponent(
       `Hi! I'm interested in customizing "${product.name}" (${product.modelNumber}). Can you help me with the options?`
     );
     window.open(`https://wa.me/919876543210?text=${message}`, "_blank");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-cream">
+        <Header />
+        <main className="pt-24 pb-16">
+          <div className="varnika-container">
+            <Skeleton className="h-6 w-32 mb-8" />
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
+              <div className="space-y-4">
+                <Skeleton className="aspect-[4/3] rounded-sm" />
+                <div className="flex gap-4">
+                  <Skeleton className="w-24 h-24 rounded-sm" />
+                  <Skeleton className="w-24 h-24 rounded-sm" />
+                  <Skeleton className="w-24 h-24 rounded-sm" />
+                </div>
+              </div>
+              <div className="space-y-6">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-14 w-full" />
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-cream">
+        <Header />
+        <main className="pt-24 pb-16">
+          <div className="varnika-container text-center py-16">
+            <h1 className="font-display text-3xl text-espresso mb-4">
+              Product Not Found
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              The piece you're looking for doesn't exist or has been removed.
+            </p>
+            <Link to="/collections">
+              <Button variant="outline">Browse Collection</Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream">
@@ -85,11 +109,11 @@ const ProductDetail = () => {
           {/* Breadcrumb */}
           <div className="mb-8">
             <Link
-              to="/"
+              to="/collections"
               className="inline-flex items-center gap-2 text-muted-foreground hover:text-espresso transition-colors font-body text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Gallery
+              Back to Collection
             </Link>
           </div>
 
@@ -102,12 +126,15 @@ const ProductDetail = () => {
                 onClick={() => setIsZoomed(!isZoomed)}
               >
                 <img
-                  src={images[selectedImage]}
+                  src={images[selectedImage] || product.imageUrl}
                   alt={product.name}
                   className={cn(
                     "w-full h-full object-cover transition-transform duration-500",
                     isZoomed ? "scale-150" : "scale-100"
                   )}
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&h=800&fit=crop";
+                  }}
                 />
                 <div className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-espresso/80 text-cream text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
                   <ZoomIn className="w-4 h-4" />
@@ -116,29 +143,34 @@ const ProductDetail = () => {
               </div>
 
               {/* Thumbnails */}
-              <div className="flex gap-4">
-                {images.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setSelectedImage(index);
-                      setIsZoomed(false);
-                    }}
-                    className={cn(
-                      "relative aspect-square w-24 rounded-sm overflow-hidden transition-all duration-300",
-                      selectedImage === index
-                        ? "ring-2 ring-gold ring-offset-2"
-                        : "opacity-60 hover:opacity-100"
-                    )}
-                  >
-                    <img
-                      src={img}
-                      alt={`View ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
+              {images.length > 1 && (
+                <div className="flex gap-4">
+                  {images.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setSelectedImage(index);
+                        setIsZoomed(false);
+                      }}
+                      className={cn(
+                        "relative aspect-square w-24 rounded-sm overflow-hidden transition-all duration-300",
+                        selectedImage === index
+                          ? "ring-2 ring-gold ring-offset-2"
+                          : "opacity-60 hover:opacity-100"
+                      )}
+                    >
+                      <img
+                        src={img}
+                        alt={`View ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=200&h=200&fit=crop";
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Product Info */}
@@ -146,8 +178,12 @@ const ProductDetail = () => {
               {/* Brand & Model */}
               <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                 <span className="font-body">{product.brand}</span>
-                <span>•</span>
-                <span className="font-body">{product.modelNumber}</span>
+                {product.modelNumber && (
+                  <>
+                    <span>•</span>
+                    <span className="font-body">{product.modelNumber}</span>
+                  </>
+                )}
               </div>
 
               {/* Title */}
@@ -156,30 +192,32 @@ const ProductDetail = () => {
               </h1>
 
               {/* Rating */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={cn(
-                        "w-5 h-5",
-                        i < Math.floor(product.rating)
-                          ? "text-gold fill-gold"
-                          : "text-muted"
-                      )}
-                    />
-                  ))}
+              {product.rating > 0 && (
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          "w-5 h-5",
+                          i < Math.floor(product.rating)
+                            ? "text-gold fill-gold"
+                            : "text-muted"
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <span className="font-display text-lg text-espresso">{product.rating}</span>
+                  <span className="text-muted-foreground font-body">
+                    ({product.reviewCount} reviews)
+                  </span>
                 </div>
-                <span className="font-display text-lg text-espresso">{product.rating}</span>
-                <span className="text-muted-foreground font-body">
-                  ({product.reviewCount} reviews)
-                </span>
-              </div>
+              )}
 
               {/* Description */}
               <div className="prose prose-neutral mb-8">
                 <p className="text-muted-foreground font-body leading-relaxed whitespace-pre-line">
-                  {product.longDescription}
+                  {product.longDescription || product.shortDescription}
                 </p>
               </div>
 
@@ -210,28 +248,35 @@ const ProductDetail = () => {
                   ⚡ Only {product.stock} pieces remaining
                 </p>
               )}
+              {product.stock === 0 && (
+                <p className="text-muted-foreground font-body text-sm mb-6">
+                  Currently sold out - Join waitlist
+                </p>
+              )}
 
               {/* Quantity & Actions */}
               <div className="space-y-4 mb-8">
                 {/* Quantity */}
-                <div className="flex items-center gap-4">
-                  <span className="font-body text-sm text-muted-foreground w-20">Quantity</span>
-                  <div className="flex items-center border border-border rounded">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="p-3 hover:bg-cream-dark transition-colors"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="w-12 text-center font-body">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                      className="p-3 hover:bg-cream-dark transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
+                {product.stock > 0 && (
+                  <div className="flex items-center gap-4">
+                    <span className="font-body text-sm text-muted-foreground w-20">Quantity</span>
+                    <div className="flex items-center border border-border rounded">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="p-3 hover:bg-cream-dark transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-12 text-center font-body">{quantity}</span>
+                      <button
+                        onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                        className="p-3 hover:bg-cream-dark transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -240,8 +285,9 @@ const ProductDetail = () => {
                     size="xl"
                     className="flex-1"
                     onClick={handleReserve}
+                    disabled={product.stock === 0}
                   >
-                    Reserve This Piece
+                    {product.stock === 0 ? "Join Waitlist" : "Reserve This Piece"}
                   </Button>
                   <Button
                     variant="ghost"
@@ -299,28 +345,39 @@ const ProductDetail = () => {
 
               {/* Specifications */}
               <div className="mt-8 pt-8 border-t border-border">
-                <h3 className="font-display text-lg text-espresso mb-4">Specifications</h3>
+                <h3 className="font-display text-lg text-espresso mb-4">Details</h3>
                 <dl className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <dt className="text-muted-foreground font-body">Dimensions</dt>
-                    <dd className="font-body text-espresso mt-1">{product.dimensions}</dd>
+                    <dt className="text-muted-foreground font-body">Category</dt>
+                    <dd className="font-body text-espresso mt-1">{product.category}</dd>
                   </div>
-                  <div>
-                    <dt className="text-muted-foreground font-body">Weight</dt>
-                    <dd className="font-body text-espresso mt-1">{product.weight}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground font-body">Materials</dt>
-                    <dd className="font-body text-espresso mt-1">{product.materials}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground font-body">Artisan</dt>
-                    <dd className="font-body text-espresso mt-1">{product.artisan}</dd>
-                  </div>
-                  <div className="col-span-2">
-                    <dt className="text-muted-foreground font-body">Origin</dt>
-                    <dd className="font-body text-espresso mt-1">{product.origin}</dd>
-                  </div>
+                  {product.subcategory && (
+                    <div>
+                      <dt className="text-muted-foreground font-body">Type</dt>
+                      <dd className="font-body text-espresso mt-1">{product.subcategory}</dd>
+                    </div>
+                  )}
+                  {product.color && (
+                    <div>
+                      <dt className="text-muted-foreground font-body">Color/Variant</dt>
+                      <dd className="font-body text-espresso mt-1">{product.color}</dd>
+                    </div>
+                  )}
+                  {product.tags.length > 0 && (
+                    <div className="col-span-2">
+                      <dt className="text-muted-foreground font-body">Tags</dt>
+                      <dd className="font-body text-espresso mt-1 flex flex-wrap gap-2">
+                        {product.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 bg-cream-dark text-xs rounded"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
                 </dl>
               </div>
             </div>
