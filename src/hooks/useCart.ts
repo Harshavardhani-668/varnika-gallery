@@ -1,11 +1,8 @@
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export interface CartItem {
   id: string;
-  user_id: string;
   product_id: string;
   product_name: string;
   product_image: string | null;
@@ -15,198 +12,119 @@ export interface CartItem {
   updated_at: string;
 }
 
+// Local storage-based cart (no Supabase tables needed)
+const CART_KEY = 'varnika_cart';
+
+function loadCart(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(CART_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCart(items: CartItem[]) {
+  localStorage.setItem(CART_KEY, JSON.stringify(items));
+}
+
 export const useCart = () => {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const getCart = async (): Promise<CartItem[]> => {
-    if (!user) return [];
-    
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('cart_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  const getCart = useCallback(async (): Promise<CartItem[]> => {
+    return loadCart();
+  }, []);
 
-      if (error) throw error;
-      return data || [];
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addToCart = async (
+  const addToCart = useCallback(async (
     productId: string,
     productName: string,
     price: number,
     quantity: number = 1,
     productImage?: string
   ) => {
-    if (!user) {
-      toast({
-        title: 'Please sign in',
-        description: 'You need to be signed in to add items to cart.',
-        variant: 'destructive',
-      });
-      return { error: 'Not authenticated' };
-    }
-
     setLoading(true);
     try {
-      // Check if item already exists in cart
-      const { data: existing } = await supabase
-        .from('cart_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('product_id', productId)
-        .single();
+      const cart = loadCart();
+      const existingIndex = cart.findIndex(item => item.product_id === productId);
 
-      if (existing) {
-        // Update quantity
-        const { error } = await supabase
-          .from('cart_items')
-          .update({ 
-            quantity: existing.quantity + quantity,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existing.id);
-
-        if (error) throw error;
+      if (existingIndex >= 0) {
+        cart[existingIndex].quantity += quantity;
+        cart[existingIndex].updated_at = new Date().toISOString();
       } else {
-        // Insert new item
-        const { error } = await supabase
-          .from('cart_items')
-          .insert({
-            user_id: user.id,
-            product_id: productId,
-            product_name: productName,
-            product_image: productImage || null,
-            quantity,
-            price,
-          });
-
-        if (error) throw error;
+        cart.push({
+          id: crypto.randomUUID(),
+          product_id: productId,
+          product_name: productName,
+          product_image: productImage || null,
+          quantity,
+          price,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
       }
 
+      saveCart(cart);
       toast({
         title: 'Added to cart!',
         description: `${productName} has been added to your cart.`,
       });
-
       return { error: null };
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const updateCartItem = async (itemId: string, quantity: number) => {
-    if (!user) return { error: 'Not authenticated' };
-
+  const updateCartItem = useCallback(async (itemId: string, quantity: number) => {
     setLoading(true);
     try {
-      if (quantity <= 0) {
-        return await removeFromCart(itemId);
+      if (quantity <= 0) return await removeFromCart(itemId);
+      const cart = loadCart();
+      const index = cart.findIndex(item => item.id === itemId);
+      if (index >= 0) {
+        cart[index].quantity = quantity;
+        cart[index].updated_at = new Date().toISOString();
+        saveCart(cart);
       }
-
-      const { error } = await supabase
-        .from('cart_items')
-        .update({ 
-          quantity,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', itemId);
-
-      if (error) throw error;
       return { error: null };
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const removeFromCart = async (itemId: string) => {
-    if (!user) return { error: 'Not authenticated' };
-
+  const removeFromCart = useCallback(async (itemId: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('id', itemId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Removed from cart',
-        description: 'Item has been removed from your cart.',
-      });
-
+      const cart = loadCart().filter(item => item.id !== itemId);
+      saveCart(cart);
+      toast({ title: 'Removed from cart', description: 'Item has been removed from your cart.' });
       return { error: null };
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const clearCart = async () => {
-    if (!user) return { error: 'Not authenticated' };
-
+  const clearCart = useCallback(async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) throw error;
+      saveCart([]);
       return { error: null };
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  return {
-    loading,
-    getCart,
-    addToCart,
-    updateCartItem,
-    removeFromCart,
-    clearCart,
-  };
+  return { loading, getCart, addToCart, updateCartItem, removeFromCart, clearCart };
 };

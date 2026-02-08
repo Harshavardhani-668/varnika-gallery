@@ -5,25 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProducts";
+import { useScrollReveal, useStaggeredReveal } from "@/hooks/useAnimations";
 
 const GalleryGrid = () => {
   const { data: products, isLoading } = useProducts();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
-
-  // Show only 4-5 products on homepage
+  
+  const headerReveal = useScrollReveal<HTMLDivElement>();
   const displayProducts = products?.slice(0, 5) || [];
+  const { containerRef, visibleItems } = useStaggeredReveal(displayProducts.length, 150);
 
   const toggleLike = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setLikedItems((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
       return newSet;
     });
   };
@@ -55,10 +54,24 @@ const GalleryGrid = () => {
   }
 
   return (
-    <section id="gallery" className="py-24 bg-cream">
-      <div className="varnika-container">
+    <section id="gallery" className="py-24 bg-cream relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-pastel-pink/10 blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-pastel-lavender/10 blur-3xl" />
+      </div>
+
+      <div className="varnika-container relative">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div
+          ref={headerReveal.ref}
+          className={cn(
+            "text-center mb-16 transition-all duration-700",
+            headerReveal.isVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-8"
+          )}
+        >
           <span className="text-gold text-sm tracking-[0.3em] uppercase font-body">
             Curated Collection
           </span>
@@ -72,7 +85,7 @@ const GalleryGrid = () => {
         </div>
 
         {/* Masonry Grid */}
-        <div className="masonry-grid">
+        <div className="masonry-grid" ref={containerRef}>
           {displayProducts.map((art, index) => (
             <Link
               key={art.id}
@@ -80,11 +93,16 @@ const GalleryGrid = () => {
               className="masonry-item block group"
               onMouseEnter={() => setHoveredId(art.id)}
               onMouseLeave={() => setHoveredId(null)}
-              style={{
-                animationDelay: `${index * 100}ms`,
-              }}
             >
-              <article className="relative bg-card rounded-sm overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-500 animate-fade-in">
+              <article
+                className={cn(
+                  "relative bg-card rounded-sm overflow-hidden floating-shadow transition-all duration-500",
+                  visibleItems.has(index)
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-12"
+                )}
+                style={{ transitionDelay: `${index * 100}ms` }}
+              >
                 {/* Image Container */}
                 <div className="image-reveal aspect-auto">
                   <img
@@ -139,7 +157,7 @@ const GalleryGrid = () => {
                   <button
                     onClick={(e) => toggleLike(art.id, e)}
                     className={cn(
-                      "absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                      "absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 interactive-element",
                       likedItems.has(art.id)
                         ? "bg-terracotta text-cream"
                         : "bg-cream/90 text-espresso hover:bg-cream"
@@ -201,7 +219,7 @@ const GalleryGrid = () => {
         {/* View All CTA */}
         <div className="text-center mt-16">
           <Link to="/collections">
-            <Button variant="gallery" size="xl">
+            <Button variant="gallery" size="xl" className="interactive-element glow-hover">
               View All Masterpieces
             </Button>
           </Link>

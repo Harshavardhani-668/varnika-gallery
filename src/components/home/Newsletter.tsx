@@ -3,17 +3,20 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useScrollReveal } from "@/hooks/useAnimations";
+import { cn } from "@/lib/utils";
+import SparkleParticles from "@/components/effects/SparkleParticles";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const sectionReveal = useScrollReveal<HTMLElement>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     setIsLoading(true);
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsLoading(false);
     setEmail("");
@@ -23,17 +26,29 @@ const Newsletter = () => {
   };
 
   return (
-    <section className="py-24 bg-cream relative overflow-hidden">
+    <section
+      ref={sectionReveal.ref}
+      className="py-24 bg-cream relative overflow-hidden"
+    >
       {/* Decorative Background */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-gold blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-terracotta blur-3xl" />
       </div>
+      
+      <SparkleParticles count={10} />
 
-      <div className="varnika-container relative">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gold/10 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-gold" />
+      <div className="varnika-container relative z-10">
+        <div
+          className={cn(
+            "max-w-2xl mx-auto text-center transition-all duration-700",
+            sectionReveal.isVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          )}
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gold/10 rounded-full mb-6 glow-hover">
+            <Sparkles className="w-4 h-4 text-gold animate-sparkle-pulse" />
             <span className="text-sm text-gold font-body tracking-wide">
               Join 5,000+ Art Lovers
             </span>
@@ -62,7 +77,7 @@ const Newsletter = () => {
               variant="artisan"
               size="lg"
               disabled={isLoading}
-              className="h-14 px-8 shrink-0 group"
+              className="h-14 px-8 shrink-0 group interactive-element"
             >
               {isLoading ? (
                 "Joining..."
