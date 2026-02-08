@@ -66,6 +66,12 @@ export default {
         },
         terracotta: "hsl(var(--terracotta))",
         sage: "hsl(var(--sage))",
+        pastel: {
+          pink: "hsl(var(--pastel-pink))",
+          lavender: "hsl(var(--pastel-lavender))",
+          mint: "hsl(var(--pastel-mint))",
+          rose: "hsl(var(--pastel-rose))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

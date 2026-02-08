@@ -1,11 +1,23 @@
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Mail, Phone, MapPin } from "lucide-react";
+import { Instagram, Facebook, Mail, Phone, MapPin, Heart } from "lucide-react";
+import { useScrollReveal } from "@/hooks/useAnimations";
+import { cn } from "@/lib/utils";
 
 const Footer = () => {
+  const footerReveal = useScrollReveal<HTMLElement>();
+
   return (
-    <footer className="bg-espresso text-cream pt-20 pb-8">
+    <footer
+      ref={footerReveal.ref}
+      className="bg-espresso text-cream pt-20 pb-8"
+    >
       <div className="varnika-container">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div
+          className={cn(
+            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 transition-all duration-700",
+            footerReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          )}
+        >
           {/* Brand */}
           <div className="lg:col-span-1">
             <h2 className="font-display text-3xl mb-4">Varnika</h2>
@@ -15,13 +27,13 @@ const Footer = () => {
             <div className="flex gap-4">
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center hover:bg-gold transition-colors duration-300"
+                className="w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center hover:bg-gold transition-all duration-300 interactive-element"
               >
                 <Instagram className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center hover:bg-gold transition-colors duration-300"
+                className="w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center hover:bg-gold transition-all duration-300 interactive-element"
               >
                 <Facebook className="w-5 h-5" />
               </a>
@@ -36,7 +48,7 @@ const Footer = () => {
                 <li key={item}>
                   <Link
                     to={`/${item.toLowerCase().replace(" ", "-")}`}
-                    className="text-cream/70 hover:text-cream transition-colors duration-300 text-sm font-body"
+                    className="text-cream/70 hover:text-cream transition-colors duration-300 text-sm font-body interactive-element inline-block"
                   >
                     {item}
                   </Link>
@@ -53,7 +65,7 @@ const Footer = () => {
                 <li key={item}>
                   <Link
                     to={`/${item.toLowerCase().replace(" ", "-")}`}
-                    className="text-cream/70 hover:text-cream transition-colors duration-300 text-sm font-body"
+                    className="text-cream/70 hover:text-cream transition-colors duration-300 text-sm font-body interactive-element inline-block"
                   >
                     {item}
                   </Link>
@@ -88,14 +100,14 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-cream/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-cream/50 text-sm font-body">
-              © 2024 Varnika. All artworks are handmade with love.
+            <p className="text-cream/50 text-sm font-body flex items-center gap-1">
+              © 2025 Varnika. Made with <Heart className="w-3 h-3 text-terracotta fill-terracotta" /> handmade love.
             </p>
             <div className="flex gap-6">
-              <Link to="/privacy" className="text-cream/50 hover:text-cream text-sm font-body transition-colors">
+              <Link to="/privacy" className="text-cream/50 hover:text-cream text-sm font-body transition-colors interactive-element">
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="text-cream/50 hover:text-cream text-sm font-body transition-colors">
+              <Link to="/terms" className="text-cream/50 hover:text-cream text-sm font-body transition-colors interactive-element">
                 Terms of Service
               </Link>
             </div>

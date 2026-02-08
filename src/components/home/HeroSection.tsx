@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useFeaturedProducts } from "@/hooks/useProducts";
+import FloatingClouds from "@/components/effects/FloatingClouds";
+import SparkleParticles from "@/components/effects/SparkleParticles";
 
 const HeroSection = () => {
   const { data: featuredProducts, isLoading } = useFeaturedProducts();
@@ -56,7 +58,7 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Background Image */}
+      {/* Background Image with parallax */}
       <div className="absolute inset-0">
         {featuredProducts.map((item, index) => (
           <div
@@ -77,6 +79,10 @@ const HeroSection = () => {
         ))}
       </div>
 
+      {/* Floating effects */}
+      <FloatingClouds count={4} />
+      <SparkleParticles count={15} />
+
       {/* Content */}
       <div className="relative z-10 varnika-container w-full py-32 md:py-40">
         <div className="max-w-2xl">
@@ -87,7 +93,7 @@ const HeroSection = () => {
               isAnimating ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
             )}
           >
-            <span className="inline-block px-4 py-1.5 bg-gold/20 backdrop-blur-sm text-gold-light text-sm tracking-[0.2em] uppercase mb-6 rounded">
+            <span className="inline-block px-4 py-1.5 bg-gold/20 backdrop-blur-sm text-gold-light text-sm tracking-[0.2em] uppercase mb-6 rounded pulse-glow">
               Featured Piece
             </span>
           </div>
@@ -95,7 +101,7 @@ const HeroSection = () => {
           {/* Title */}
           <h1
             className={cn(
-              "font-display text-5xl md:text-7xl lg:text-8xl text-cream leading-[0.9] mb-6 transition-all duration-500 ease-smooth",
+              "font-display text-5xl md:text-7xl lg:text-8xl text-cream leading-[0.9] mb-6 transition-all duration-500 ease-smooth text-shadow-strong",
               isAnimating ? "opacity-0 translate-y-8" : "opacity-100 translate-y-0"
             )}
             style={{ transitionDelay: "100ms" }}
@@ -106,7 +112,7 @@ const HeroSection = () => {
           {/* Description */}
           <p
             className={cn(
-              "font-body text-cream/80 text-lg md:text-xl leading-relaxed mb-8 max-w-lg transition-all duration-500 ease-smooth",
+              "font-body text-cream/80 text-lg md:text-xl leading-relaxed mb-8 max-w-lg transition-all duration-500 ease-smooth text-shadow-soft",
               isAnimating ? "opacity-0 translate-y-8" : "opacity-100 translate-y-0"
             )}
             style={{ transitionDelay: "200ms" }}
@@ -122,7 +128,7 @@ const HeroSection = () => {
             )}
             style={{ transitionDelay: "300ms" }}
           >
-            <span className="font-display text-3xl text-gold">
+            <span className="font-display text-3xl text-gold text-shadow-soft">
               {currentArt.salePrice ? (
                 <>
                   ₹{currentArt.salePrice.toLocaleString("en-IN")}
@@ -135,7 +141,7 @@ const HeroSection = () => {
               )}
             </span>
             <Link to={`/product/${currentArt.id}`}>
-              <Button variant="reserve" size="xl" className="group">
+              <Button variant="reserve" size="xl" className="group interactive-element">
                 Explore This Piece
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -163,7 +169,7 @@ const HeroSection = () => {
       {/* Scroll Indicator */}
       <button
         onClick={scrollToGallery}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-cream/60 hover:text-cream transition-colors animate-float"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-cream/60 hover:text-cream transition-colors animate-gentle-bob"
       >
         <div className="flex flex-col items-center gap-2">
           <span className="text-xs tracking-[0.2em] uppercase font-body">Discover</span>
