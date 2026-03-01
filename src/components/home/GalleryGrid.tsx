@@ -13,7 +13,7 @@ const GalleryGrid = () => {
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
   
   const headerReveal = useScrollReveal<HTMLDivElement>();
-  const displayProducts = products?.slice(0, 5) || [];
+  const displayProducts = products?.slice(0, 6) || [];
   const { containerRef, visibleItems } = useStaggeredReveal(displayProducts.length, 150);
 
   const toggleLike = (id: string, e: React.MouseEvent) => {
@@ -29,17 +29,17 @@ const GalleryGrid = () => {
 
   if (isLoading) {
     return (
-      <section id="gallery" className="py-24 bg-cream">
+      <section id="gallery" className="py-24 bg-background">
         <div className="varnika-container">
           <div className="text-center mb-16">
-            <Skeleton className="h-4 w-32 mx-auto bg-gold/20" />
-            <Skeleton className="h-12 w-64 mx-auto mt-4 bg-espresso/10" />
+            <Skeleton className="h-4 w-32 mx-auto bg-muted" />
+            <Skeleton className="h-12 w-64 mx-auto mt-4 bg-muted" />
             <Skeleton className="h-6 w-96 mx-auto mt-4 bg-muted" />
           </div>
           <div className="masonry-grid">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="masonry-item">
-                <Skeleton className="w-full h-80 rounded-sm" />
+                <Skeleton className="w-full h-80 rounded-card" />
                 <div className="p-5 space-y-3">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-6 w-40" />
@@ -54,11 +54,11 @@ const GalleryGrid = () => {
   }
 
   return (
-    <section id="gallery" className="py-24 bg-cream relative overflow-hidden">
-      {/* Decorative background elements */}
+    <section id="gallery" className="py-24 bg-background relative overflow-hidden">
+      {/* Decorative blobs */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-pastel-pink/10 blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-pastel-lavender/10 blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-gold/5 blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-64 h-64 rounded-full bg-pastel-pink/5 blur-3xl" />
       </div>
 
       <div className="varnika-container relative">
@@ -66,21 +66,18 @@ const GalleryGrid = () => {
         <div
           ref={headerReveal.ref}
           className={cn(
-            "text-center mb-16 transition-all duration-700",
-            headerReveal.isVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-8"
+            "text-center mb-16 transition-all duration-700 ease-boutique",
+            headerReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}
         >
-          <span className="text-gold text-sm tracking-[0.3em] uppercase font-body">
-            Curated Collection
+          <span className="text-gold text-sm tracking-widest uppercase font-body">
+            Moments We've Crafted
           </span>
-          <h2 className="font-display text-4xl md:text-5xl text-espresso mt-4 mb-6">
-            The Gallery
+          <h2 className="font-display text-4xl md:text-5xl text-foreground mt-4 mb-6">
+            Curated Collections
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto font-body">
-            Each piece in our collection is a conversation between the artist's vision
-            and the timeless traditions of handcraft.
+            Thoughtfully designed for every heartfelt occasion.
           </p>
         </div>
 
@@ -96,7 +93,7 @@ const GalleryGrid = () => {
             >
               <article
                 className={cn(
-                  "relative bg-card rounded-sm overflow-hidden floating-shadow transition-all duration-500",
+                  "relative bg-card rounded-card overflow-hidden floating-shadow transition-all duration-600 ease-boutique",
                   visibleItems.has(index)
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-12"
@@ -104,26 +101,26 @@ const GalleryGrid = () => {
                 style={{ transitionDelay: `${index * 100}ms` }}
               >
                 {/* Image Container */}
-                <div className="image-reveal aspect-auto">
+                <div className="image-reveal aspect-auto overflow-hidden">
                   <img
                     src={art.imageUrl}
                     alt={art.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-700 ease-boutique group-hover:scale-[1.03]"
                     onError={(e) => {
                       e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=800&fit=crop";
                     }}
                   />
                   
-                  {/* Story Overlay */}
-                  <div className="story-overlay bg-gradient-to-t from-espresso/90 via-espresso/40 to-transparent">
-                    <div className="text-cream">
+                  {/* Hover Overlay - 20% dark */}
+                  <div className="story-overlay bg-gradient-to-t from-foreground/40 via-foreground/10 to-transparent">
+                    <div className="text-primary-foreground">
                       <p className="font-body text-sm leading-relaxed opacity-90">
-                        {art.shortDescription}
+                        Handmade with care.
                       </p>
-                      <div className="flex items-center gap-2 mt-3">
+                      <div className="flex items-center gap-2 mt-2">
                         <Eye className="w-4 h-4 text-gold" />
                         <span className="text-xs text-gold tracking-wider uppercase">
-                          View Story
+                          View Details
                         </span>
                       </div>
                     </div>
@@ -132,22 +129,22 @@ const GalleryGrid = () => {
                   {/* Badges */}
                   <div className="absolute top-4 left-4 flex flex-col gap-2">
                     {art.salePrice && (
-                      <span className="px-3 py-1 bg-terracotta text-cream text-xs tracking-wider uppercase rounded-sm">
+                      <span className="px-3 py-1 bg-terracotta text-primary-foreground text-xs tracking-wider uppercase rounded-full font-body">
                         Sale
                       </span>
                     )}
                     {art.stock <= 3 && art.stock > 0 && (
-                      <span className="px-3 py-1 bg-espresso/80 text-cream text-xs tracking-wider uppercase rounded-sm">
+                      <span className="px-3 py-1 bg-foreground/70 text-primary-foreground text-xs tracking-wider uppercase rounded-full font-body">
                         Only {art.stock} left
                       </span>
                     )}
                     {art.stock === 0 && (
-                      <span className="px-3 py-1 bg-muted text-muted-foreground text-xs tracking-wider uppercase rounded-sm">
+                      <span className="px-3 py-1 bg-muted text-muted-foreground text-xs tracking-wider uppercase rounded-full font-body">
                         Sold Out
                       </span>
                     )}
                     {art.customizable && (
-                      <span className="px-3 py-1 bg-gold/90 text-espresso text-xs tracking-wider uppercase rounded-sm">
+                      <span className="px-3 py-1 bg-gold/90 text-foreground text-xs tracking-wider uppercase rounded-full font-body">
                         Customizable
                       </span>
                     )}
@@ -157,10 +154,10 @@ const GalleryGrid = () => {
                   <button
                     onClick={(e) => toggleLike(art.id, e)}
                     className={cn(
-                      "absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 interactive-element",
+                      "absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
                       likedItems.has(art.id)
-                        ? "bg-terracotta text-cream"
-                        : "bg-cream/90 text-espresso hover:bg-cream"
+                        ? "bg-terracotta text-primary-foreground"
+                        : "bg-card/90 text-foreground hover:bg-card"
                     )}
                   >
                     <Heart
@@ -176,17 +173,17 @@ const GalleryGrid = () => {
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div>
-                      <p className="text-xs text-muted-foreground tracking-wider uppercase mb-1">
+                      <p className="text-xs text-muted-foreground tracking-wider uppercase mb-1 font-body">
                         {art.category}
                       </p>
-                      <h3 className="font-display text-xl text-espresso group-hover:text-gold transition-colors duration-300">
+                      <h3 className="font-display text-xl text-foreground group-hover:text-gold transition-colors duration-300">
                         {art.name}
                       </h3>
                     </div>
                     {art.rating > 0 && (
                       <div className="flex items-center gap-1 shrink-0">
                         <Star className="w-4 h-4 text-gold fill-gold" />
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground font-body">
                           {art.rating}
                         </span>
                       </div>
@@ -200,12 +197,12 @@ const GalleryGrid = () => {
                         <span className="font-display text-xl text-terracotta">
                           ₹{art.salePrice.toLocaleString("en-IN")}
                         </span>
-                        <span className="text-muted-foreground line-through text-sm">
+                        <span className="text-muted-foreground line-through text-sm font-body">
                           ₹{art.regularPrice.toLocaleString("en-IN")}
                         </span>
                       </>
                     ) : (
-                      <span className="font-display text-xl text-espresso">
+                      <span className="font-display text-xl text-foreground">
                         ₹{art.regularPrice.toLocaleString("en-IN")}
                       </span>
                     )}
@@ -219,8 +216,8 @@ const GalleryGrid = () => {
         {/* View All CTA */}
         <div className="text-center mt-16">
           <Link to="/collections">
-            <Button variant="gallery" size="xl" className="interactive-element glow-hover">
-              View All Masterpieces
+            <Button variant="artisan" size="xl" className="button-glow">
+              View All Collections
             </Button>
           </Link>
         </div>

@@ -3,6 +3,7 @@ import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import GalleryGrid from "@/components/home/GalleryGrid";
 import StoryBanner from "@/components/home/StoryBanner";
+import WhyVarnika from "@/components/home/WhyVarnika";
 import Testimonials from "@/components/home/Testimonials";
 import Newsletter from "@/components/home/Newsletter";
 
@@ -14,6 +15,7 @@ const Index = () => {
         <HeroSection />
         <GalleryGrid />
         <StoryBanner />
+        <WhyVarnika />
         <Testimonials />
         <Newsletter />
       </main>
