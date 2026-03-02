@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart, CartItem } from '@/hooks/useCart';
 import { useOrders } from '@/hooks/useOrders';
@@ -7,7 +7,6 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, ShoppingCart, Trash2, Loader2 } from 'lucide-react';
 
@@ -21,12 +20,8 @@ const Cart = () => {
   const [processingOrder, setProcessingOrder] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
     loadCart();
-  }, [user, navigate]);
+  }, []);
 
   const loadCart = async () => {
     setLoading(true);
@@ -52,6 +47,12 @@ const Cart = () => {
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
 
+    // Require auth for checkout
+    if (!user) {
+      navigate('/login?redirect=/cart');
+      return;
+    }
+
     setProcessingOrder(true);
     
     const orderItems = cartItems.map(item => ({
@@ -63,7 +64,6 @@ const Cart = () => {
     }));
 
     const shippingAddress = {
-      // This should be collected from a form
       name: user?.user_metadata?.full_name || user?.email,
       email: user?.email,
     };
@@ -80,10 +80,10 @@ const Cart = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cream to-white">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="pt-32 pb-20 px-4 flex justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-pastel-pink" />
+          <Loader2 className="w-8 h-8 animate-spin text-gold" />
         </div>
         <Footer />
       </div>
@@ -91,86 +91,84 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream to-white">
+    <div className="min-h-screen bg-background">
       <Header />
       
       <div className="pt-32 pb-20 px-4">
         <div className="varnika-container max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-8">
-            <ShoppingCart className="w-8 h-8 text-pastel-pink" />
-            <h1 className="font-display text-4xl text-espresso">
+            <ShoppingCart className="w-8 h-8 text-gold" />
+            <h1 className="font-display text-4xl text-foreground">
               Your Cart
             </h1>
           </div>
 
           {cartItems.length === 0 ? (
-            <Card className="border-pastel-lavender/20 shadow-soft text-center py-12">
+            <Card className="text-center py-12">
               <CardContent>
-                <ShoppingCart className="w-16 h-16 text-pastel-lavender mx-auto mb-4" />
-                <h2 className="font-display text-2xl text-espresso mb-2">
+                <ShoppingCart className="w-16 h-16 text-muted mx-auto mb-4" />
+                <h2 className="font-display text-2xl text-foreground mb-2">
                   Your cart is empty
                 </h2>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-6 font-body">
                   Start adding some handmade treasures!
                 </p>
-                <Button
-                  onClick={() => navigate('/collections')}
-                  className="bg-gradient-to-r from-pastel-pink to-pastel-lavender hover:opacity-90 text-white"
-                >
-                  Browse Collections
-                </Button>
+                <Link to="/collections">
+                  <Button variant="artisan" className="button-glow">Browse Collections</Button>
+                </Link>
               </CardContent>
             </Card>
           ) : (
             <div className="grid lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-4">
                 {cartItems.map((item) => (
-                  <Card key={item.id} className="border-pastel-lavender/20 shadow-soft">
+                  <Card key={item.id}>
                     <CardContent className="p-6">
                       <div className="flex gap-4">
                         {item.product_image && (
-                          <img
-                            src={item.product_image}
-                            alt={item.product_name}
-                            className="w-24 h-24 object-cover rounded-lg"
-                          />
+                          <Link to={`/product/${item.product_id}`}>
+                            <img
+                              src={item.product_image}
+                              alt={item.product_name}
+                              className="w-24 h-24 object-cover rounded-xl"
+                            />
+                          </Link>
                         )}
                         <div className="flex-1">
-                          <h3 className="font-display text-xl text-espresso mb-2">
-                            {item.product_name}
-                          </h3>
-                          <p className="text-lg text-pastel-pink font-semibold mb-4">
-                            ₹{item.price.toFixed(2)}
+                          <Link to={`/product/${item.product_id}`}>
+                            <h3 className="font-display text-xl text-foreground mb-2 hover:text-gold transition-colors">
+                              {item.product_name}
+                            </h3>
+                          </Link>
+                          <p className="text-lg text-gold font-display mb-4">
+                            ₹{item.price.toLocaleString("en-IN")}
                           </p>
                           
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size="sm" variant="outline"
                                 onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                                className="h-8 w-8 p-0 border-pastel-lavender/30"
+                                className="h-8 w-8 p-0"
                               >
                                 <Minus className="w-4 h-4" />
                               </Button>
-                              <span className="w-12 text-center font-medium">
+                              <span className="w-12 text-center font-medium font-body">
                                 {item.quantity}
                               </span>
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size="sm" variant="outline"
                                 onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                                className="h-8 w-8 p-0 border-pastel-lavender/30"
+                                className="h-8 w-8 p-0"
                               >
                                 <Plus className="w-4 h-4" />
                               </Button>
                             </div>
                             
                             <Button
-                              size="sm"
-                              variant="ghost"
+                              size="sm" variant="ghost"
                               onClick={() => handleRemoveItem(item.id)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="w-4 h-4 mr-1" />
                               Remove
@@ -179,8 +177,8 @@ const Cart = () => {
                         </div>
                         
                         <div className="text-right">
-                          <p className="font-semibold text-lg text-espresso">
-                            ₹{(item.price * item.quantity).toFixed(2)}
+                          <p className="font-display text-lg text-foreground">
+                            ₹{(item.price * item.quantity).toLocaleString("en-IN")}
                           </p>
                         </div>
                       </div>
@@ -190,35 +188,42 @@ const Cart = () => {
               </div>
 
               <div className="lg:col-span-1">
-                <Card className="border-pastel-lavender/20 shadow-soft sticky top-24">
+                <Card className="sticky top-24">
                   <CardHeader>
-                    <CardTitle className="font-display text-2xl text-espresso">
+                    <CardTitle className="font-display text-2xl text-foreground">
                       Order Summary
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Subtotal</span>
-                      <span>₹{calculateTotal().toFixed(2)}</span>
+                    <div className="flex justify-between text-muted-foreground font-body">
+                      <span>Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)</span>
+                      <span>₹{calculateTotal().toLocaleString("en-IN")}</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
+                    <div className="flex justify-between text-muted-foreground font-body">
                       <span>Shipping</span>
-                      <span>Free</span>
+                      <span className="text-sage">{calculateTotal() >= 5000 ? "Free" : "₹199"}</span>
                     </div>
                     <Separator />
-                    <div className="flex justify-between text-lg font-semibold text-espresso">
+                    <div className="flex justify-between text-lg font-display text-foreground">
                       <span>Total</span>
-                      <span>₹{calculateTotal().toFixed(2)}</span>
+                      <span>₹{(calculateTotal() + (calculateTotal() >= 5000 ? 0 : 199)).toLocaleString("en-IN")}</span>
                     </div>
+                    {calculateTotal() < 5000 && (
+                      <p className="text-xs text-muted-foreground font-body">
+                        Add ₹{(5000 - calculateTotal()).toLocaleString("en-IN")} more for free shipping
+                      </p>
+                    )}
                   </CardContent>
                   <CardFooter>
                     <Button
                       onClick={handleCheckout}
                       disabled={processingOrder}
-                      className="w-full bg-gradient-to-r from-pastel-pink to-pastel-lavender hover:opacity-90 text-white"
+                      variant="artisan"
+                      size="xl"
+                      className="w-full button-glow"
                     >
                       {processingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Proceed to Checkout
+                      {!user ? "Sign In to Checkout" : "Proceed to Checkout"}
                     </Button>
                   </CardFooter>
                 </Card>

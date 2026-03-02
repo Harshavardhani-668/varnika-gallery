@@ -10,9 +10,11 @@ import ProductDetail from "./pages/ProductDetail";
 import Collections from "./pages/Collections";
 import Gallery from "./pages/Gallery";
 import About from "./pages/About";
+import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
 import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 import Chatbot from "./components/Chatbot";
@@ -42,9 +44,11 @@ const App = () => (
             <Route path="/collections" element={<Collections />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Heart, Share2, Star, Minus, Plus, 
-  Truck, Shield, MessageCircle, ZoomIn 
+  Truck, Shield, MessageCircle, ZoomIn, ShoppingBag, Zap
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -10,24 +10,82 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useProduct } from "@/hooks/useProducts";
+import { useProduct, useProducts } from "@/hooks/useProducts";
+import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(id || "");
+  const { data: allProducts } = useProducts();
+  const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isLiked, setIsLiked] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const images = product
     ? [product.imageUrl, product.imageUrl2, product.imageUrl3].filter(Boolean)
     : [];
 
-  const handleReserve = () => {
-    toast.success("Memory reserved!", {
-      description: "We'll contact you within 2 hours to complete your order.",
-    });
+  const relatedProducts = allProducts?.filter(p => 
+    p.id !== product?.id && p.category === product?.category
+  ).slice(0, 4) || [];
+
+  const isLiked = product ? isInWishlist(product.id) : false;
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    setAddingToCart(true);
+    await addToCart(
+      product.id,
+      product.name,
+      product.salePrice || product.regularPrice,
+      quantity,
+      product.imageUrl
+    );
+    setAddingToCart(false);
+  };
+
+  const handleBuyNow = async () => {
+    if (!product) return;
+    if (!user) {
+      toast.info("Please sign in to continue", { description: "You'll be redirected back after login." });
+      navigate(`/login?redirect=/product/${product.id}&buyNow=true`);
+      return;
+    }
+    setAddingToCart(true);
+    await addToCart(
+      product.id,
+      product.name,
+      product.salePrice || product.regularPrice,
+      quantity,
+      product.imageUrl
+    );
+    setAddingToCart(false);
+    navigate('/cart');
+  };
+
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    toggleWishlist(product.id, product.name, product.salePrice || product.regularPrice, product.imageUrl);
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.name, text: product.shortDescription, url });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied!", { description: "Product link copied to clipboard." });
+    }
   };
 
   const handleWhatsApp = () => {
@@ -173,7 +231,6 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Above description copy */}
               <p className="text-gold/80 font-body text-sm italic mb-4">
                 A handcrafted creation designed to capture emotion and turn moments into lasting memories.
               </p>
@@ -184,7 +241,6 @@ const ProductDetail = () => {
                 </p>
               </div>
 
-              {/* Below description copy */}
               <p className="text-muted-foreground/80 font-body text-sm mb-8">
                 Every Varnika piece is carefully crafted using premium materials and finished with elegant detailing. Personalize it to make your gift truly one of a kind.
               </p>
@@ -210,11 +266,15 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {product.stock <= 3 && product.stock > 0 && (
+              {/* Stock Status */}
+              {product.stock > 0 && product.stock <= 3 && (
                 <p className="text-terracotta font-body text-sm mb-6">⚡ Only {product.stock} pieces remaining</p>
               )}
+              {product.stock > 3 && (
+                <p className="text-sage font-body text-sm mb-6">✓ In Stock</p>
+              )}
               {product.stock === 0 && (
-                <p className="text-muted-foreground font-body text-sm mb-6">Currently sold out - Join waitlist</p>
+                <p className="text-muted-foreground font-body text-sm mb-6">Currently sold out — Join waitlist</p>
               )}
 
               {/* Quantity & Actions */}
@@ -234,28 +294,51 @@ const ProductDetail = () => {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                {/* Primary Actions */}
+                <div className="flex flex-col gap-3">
                   <Button
                     variant="artisan"
                     size="xl"
-                    className="flex-1 button-glow"
-                    onClick={handleReserve}
-                    disabled={product.stock === 0}
+                    className="w-full button-glow"
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0 || addingToCart}
                   >
-                    {product.stock === 0 ? "Join Waitlist" : "Make This Memory Yours"}
+                    <ShoppingBag className="w-5 h-5 mr-2" />
+                    {product.stock === 0 ? "Join Waitlist" : addingToCart ? "Adding..." : "Add to Cart"}
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-14 w-14 border border-border rounded-xl" onClick={() => setIsLiked(!isLiked)}>
-                    <Heart className={cn("w-6 h-6 transition-colors", isLiked ? "fill-terracotta text-terracotta" : "text-muted-foreground")} />
+
+                  <Button
+                    size="xl"
+                    className="w-full bg-gold hover:bg-gold-light text-foreground font-body font-semibold text-base"
+                    onClick={handleBuyNow}
+                    disabled={product.stock === 0 || addingToCart}
+                  >
+                    <Zap className="w-5 h-5 mr-2" />
+                    Buy Now
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-14 w-14 border border-border rounded-xl">
-                    <Share2 className="w-6 h-6 text-muted-foreground" />
+                </div>
+
+                {/* Secondary Actions */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className={cn("flex-1 rounded-xl", isLiked && "border-terracotta text-terracotta")}
+                    onClick={handleToggleWishlist}
+                  >
+                    <Heart className={cn("w-5 h-5 mr-2", isLiked && "fill-terracotta text-terracotta")} />
+                    {isLiked ? "Saved" : "Wishlist"}
+                  </Button>
+                  <Button variant="outline" size="lg" className="flex-1 rounded-xl" onClick={handleShare}>
+                    <Share2 className="w-5 h-5 mr-2" />
+                    Share
                   </Button>
                 </div>
 
                 {product.customizable && (
                   <Button variant="outline" size="lg" className="w-full gap-2 rounded-xl" onClick={handleWhatsApp}>
                     <MessageCircle className="w-5 h-5" />
-                    Create a Moment via WhatsApp
+                    Customize via WhatsApp
                   </Button>
                 )}
               </div>
@@ -312,20 +395,57 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
+
+          {/* Related Products */}
+          {relatedProducts.length > 0 && (
+            <div className="mt-20 pt-12 border-t border-border">
+              <h2 className="font-display text-3xl text-foreground mb-8">You May Also Like</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {relatedProducts.map(p => (
+                  <Link key={p.id} to={`/product/${p.id}`} className="group">
+                    <div className="aspect-[3/4] rounded-card overflow-hidden mb-3 bg-cream-dark">
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300&h=400&fit=crop"; }}
+                      />
+                    </div>
+                    <h3 className="font-display text-sm text-foreground group-hover:text-gold transition-colors truncate">{p.name}</h3>
+                    <p className="font-display text-sm text-gold mt-1">
+                      ₹{(p.salePrice || p.regularPrice).toLocaleString("en-IN")}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
       {/* Mobile sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-40 lg:hidden">
-        <Button
-          variant="artisan"
-          size="xl"
-          className="w-full button-glow"
-          onClick={handleReserve}
-          disabled={product.stock === 0}
-        >
-          {product.stock === 0 ? "Join Waitlist" : "Make This Memory Yours"}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="artisan"
+            size="lg"
+            className="flex-1 button-glow"
+            onClick={handleAddToCart}
+            disabled={product.stock === 0 || addingToCart}
+          >
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Add to Cart
+          </Button>
+          <Button
+            size="lg"
+            className="flex-1 bg-gold hover:bg-gold-light text-foreground font-body font-semibold"
+            onClick={handleBuyNow}
+            disabled={product.stock === 0 || addingToCart}
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Buy Now
+          </Button>
+        </div>
       </div>
 
       <Footer />
