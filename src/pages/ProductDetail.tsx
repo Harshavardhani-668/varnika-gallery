@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Heart, Share2, Star, Minus, Plus, 
@@ -14,6 +14,7 @@ import { useProduct, useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -27,6 +28,20 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [isZoomed, setIsZoomed] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
+
+  // Track recently viewed
+  useEffect(() => {
+    if (product && user) {
+      supabase.from('recently_viewed').upsert({
+        user_id: user.id,
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.imageUrl,
+        price: product.salePrice || product.regularPrice,
+        viewed_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,product_id' }).then(() => {});
+    }
+  }, [product?.id, user?.id]);
 
   const images = product
     ? [product.imageUrl, product.imageUrl2, product.imageUrl3].filter(Boolean)
