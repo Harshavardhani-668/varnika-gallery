@@ -43,7 +43,7 @@ const Contact = () => {
             {/* Contact Info */}
             <div className="space-y-6">
               {[
-                { icon: Mail, label: "Email", value: "hello@varnika.art", href: "mailto:hello@varnika.art" },
+                { icon: Mail, label: "Email", value: "varnika.atelier@gmail.com", href: "mailto:varnika.atelier@gmail.com" },
                 { icon: Phone, label: "Phone", value: "+91 98765 43210", href: "tel:+919876543210" },
                 { icon: MapPin, label: "Location", value: "Handmade Studio, India", href: null },
               ].map(item => (

@@ -1,0 +1,10 @@
+[33me99d775[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Integrate reference animations
+[33m1117423[m Changes
+[33md1a7604[m Add animated welcome modal for non-authenticated users with cool animations
+[33md456b34[m Add Supabase authentication with login/signup, Google OAuth, cart management, and orders system
+[33m6b0df9e[m Add About page with company story, features, and handmade gift details
+[33m0a8040f[m Connect to Lovable Cloud
+[33m6b1638b[m Changes
+[33m7d66707[m Enhance Varnika UI variants
+[33m890102f[m Changes
+[33mb331aa1[m template: new_style_vite_react_shadcn_ts_testing_2026-01-08
