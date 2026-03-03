@@ -165,6 +165,9 @@ const Header = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                      <User className="mr-2 h-4 w-4" />My Account
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/orders')}>
                       <Package className="mr-2 h-4 w-4" />My Orders
                     </DropdownMenuItem>
@@ -243,6 +246,9 @@ const Header = () => {
                 </Link>
                 {user ? (
                   <>
+                    <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="ghost" size="icon"><User className="w-6 h-6" /></Button>
+                    </Link>
                     <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="ghost" size="icon"><Package className="w-6 h-6" /></Button>
                     </Link>
