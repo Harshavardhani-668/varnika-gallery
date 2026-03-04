@@ -1,0 +1,118 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return json({ error: "No auth header" }, 401);
+
+    const supabaseUser = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    if (authError || !user) return json({ error: "Unauthorized" }, 401);
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data: roleData } = await supabaseAdmin
+      .from("user_roles").select("role")
+      .eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    if (!roleData) return json({ error: "Forbidden" }, 403);
+
+    const body = await req.json();
+    const { action } = body;
+
+    if (action === "check_admin") {
+      return json({ isAdmin: true });
+    }
+
+    if (action === "dashboard_stats") {
+      const [usersRes, ordersRes, revenueRes, recentRes] = await Promise.all([
+        supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+        supabaseAdmin.from("orders").select("id", { count: "exact", head: true }),
+        supabaseAdmin.from("orders").select("total_amount").eq("payment_status", "paid"),
+        supabaseAdmin.from("orders").select("*, order_items(*)").order("created_at", { ascending: false }).limit(10),
+      ]);
+      const revenue = (revenueRes.data || []).reduce((sum: number, o: any) => sum + Number(o.total_amount), 0);
+      return json({
+        totalUsers: usersRes.count || 0,
+        totalOrders: ordersRes.count || 0,
+        totalRevenue: revenue,
+        recentOrders: recentRes.data || [],
+      });
+    }
+
+    if (action === "all_orders") {
+      const { data } = await supabaseAdmin
+        .from("orders").select("*, order_items(*)")
+        .order("created_at", { ascending: false });
+      return json({ orders: data || [] });
+    }
+
+    if (action === "update_order") {
+      const { orderId, status, payment_status } = body;
+      const updates: Record<string, string> = {};
+      if (status) updates.status = status;
+      if (payment_status) updates.payment_status = payment_status;
+      updates.updated_at = new Date().toISOString();
+
+      const { error } = await supabaseAdmin
+        .from("orders").update(updates).eq("id", orderId);
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
+    }
+
+    if (action === "all_users") {
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles").select("*").order("created_at", { ascending: false });
+      const { data: roles } = await supabaseAdmin.from("user_roles").select("*");
+      const usersWithRoles = (profiles || []).map((p: any) => ({
+        ...p,
+        roles: (roles || []).filter((r: any) => r.user_id === p.id).map((r: any) => r.role),
+      }));
+      return json({ users: usersWithRoles });
+    }
+
+    if (action === "promote_to_admin") {
+      const { userId } = body;
+      const { data: existing } = await supabaseAdmin
+        .from("user_roles").select("id")
+        .eq("user_id", userId).eq("role", "admin").maybeSingle();
+      if (existing) return json({ success: true, message: "Already admin" });
+
+      const { error } = await supabaseAdmin
+        .from("user_roles").insert({ user_id: userId, role: "admin" });
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
+    }
+
+    if (action === "order_detail") {
+      const { orderId } = body;
+      const { data } = await supabaseAdmin
+        .from("orders").select("*, order_items(*)").eq("id", orderId).maybeSingle();
+      if (!data) return json({ error: "Order not found" }, 404);
+      return json({ order: data });
+    }
+
+    return json({ error: "Unknown action" }, 400);
+  } catch (err) {
+    return json({ error: String(err) }, 500);
+  }
+});
