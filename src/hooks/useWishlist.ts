@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface WishlistItem {
   id: string;
+  user_id: string;
   product_id: string;
   product_name: string;
   product_image: string | null;
@@ -10,75 +12,87 @@ export interface WishlistItem {
   added_at: string;
 }
 
-const WISHLIST_KEY = 'varnika_wishlist';
-
-function loadWishlist(): WishlistItem[] {
-  try {
-    const stored = localStorage.getItem(WISHLIST_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveWishlist(items: WishlistItem[]) {
-  localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
-}
-
 export const useWishlist = () => {
   const { toast } = useToast();
-  const [items, setItems] = useState<WishlistItem[]>(loadWishlist);
+  const [items, setItems] = useState<WishlistItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Sync state when localStorage changes (other tabs)
-  useEffect(() => {
-    const handler = () => setItems(loadWishlist());
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+  const loadWishlist = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setItems([]); return; }
+    const { data, error } = await supabase
+      .from('wishlists')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('added_at', { ascending: false });
+    if (!error && data) setItems(data as WishlistItem[]);
   }, []);
+
+  useEffect(() => {
+    loadWishlist();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      loadWishlist();
+    });
+    return () => subscription.unsubscribe();
+  }, [loadWishlist]);
 
   const isInWishlist = useCallback((productId: string) => {
     return items.some(item => item.product_id === productId);
   }, [items]);
 
-  const toggleWishlist = useCallback((
+  const toggleWishlist = useCallback(async (
     productId: string,
     productName: string,
     price: number,
     productImage?: string
   ) => {
-    setItems(prev => {
-      const exists = prev.some(item => item.product_id === productId);
-      let updated: WishlistItem[];
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: 'Please sign in', description: 'You need to be logged in to save items.', variant: 'destructive' });
+      return;
+    }
 
+    setLoading(true);
+    try {
+      const exists = items.some(item => item.product_id === productId);
       if (exists) {
-        updated = prev.filter(item => item.product_id !== productId);
+        const { error } = await supabase
+          .from('wishlists')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', productId);
+        if (error) throw error;
         toast({ title: 'Removed from wishlist', description: `${productName} removed.` });
       } else {
-        updated = [...prev, {
-          id: crypto.randomUUID(),
-          product_id: productId,
-          product_name: productName,
-          product_image: productImage || null,
-          price,
-          added_at: new Date().toISOString(),
-        }];
+        const { error } = await supabase
+          .from('wishlists')
+          .insert({
+            user_id: user.id,
+            product_id: productId,
+            product_name: productName,
+            product_image: productImage || null,
+            price,
+          });
+        if (error) throw error;
         toast({ title: 'Added to wishlist!', description: `${productName} saved to your wishlist.` });
       }
+      await loadWishlist();
+    } catch (error: any) {
+      console.error('toggleWishlist error:', error);
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  }, [items, toast, loadWishlist]);
 
-      saveWishlist(updated);
-      return updated;
-    });
-  }, [toast]);
-
-  const removeFromWishlist = useCallback((productId: string) => {
-    setItems(prev => {
-      const updated = prev.filter(item => item.product_id !== productId);
-      saveWishlist(updated);
-      return updated;
-    });
-  }, []);
+  const removeFromWishlist = useCallback(async (productId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('wishlists').delete().eq('user_id', user.id).eq('product_id', productId);
+    await loadWishlist();
+  }, [loadWishlist]);
 
   const getWishlist = useCallback(() => items, [items]);
 
-  return { items, isInWishlist, toggleWishlist, removeFromWishlist, getWishlist, count: items.length };
+  return { items, loading, isInWishlist, toggleWishlist, removeFromWishlist, getWishlist, count: items.length };
 };

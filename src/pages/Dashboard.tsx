@@ -79,8 +79,18 @@ const Dashboard = () => {
   };
 
   const loadProfile = async () => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', user!.id).single();
-    if (data) setProfile({ full_name: data.full_name || '', phone: data.phone || '', email: data.email || user!.email || '' });
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user!.id).single();
+    if (data) {
+      setProfile({ full_name: data.full_name || '', phone: data.phone || '', email: data.email || user!.email || '' });
+    } else if (error && error.code === 'PGRST116') {
+      // Profile doesn't exist yet — create it
+      await supabase.from('profiles').insert({
+        id: user!.id,
+        email: user!.email || '',
+        full_name: user!.user_metadata?.full_name || '',
+      });
+      setProfile({ full_name: user!.user_metadata?.full_name || '', phone: '', email: user!.email || '' });
+    }
   };
 
   const loadAddresses = async () => {

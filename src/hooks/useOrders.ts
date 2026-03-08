@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Order {
   id: string;
@@ -23,79 +24,74 @@ export interface OrderItem {
   created_at: string;
 }
 
-// Local storage-based orders (no Supabase tables needed)
-const ORDERS_KEY = 'varnika_orders';
-const ORDER_ITEMS_KEY = 'varnika_order_items';
-
-function loadOrders(): Order[] {
-  try {
-    const stored = localStorage.getItem(ORDERS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadOrderItems(): OrderItem[] {
-  try {
-    const stored = localStorage.getItem(ORDER_ITEMS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
 export const useOrders = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const getOrders = useCallback(async (): Promise<Order[]> => {
-    return loadOrders();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (error) { console.error('getOrders error:', error); return []; }
+    return (data || []) as Order[];
   }, []);
 
   const getOrderItems = useCallback(async (orderId: string): Promise<OrderItem[]> => {
-    return loadOrderItems().filter(item => item.order_id === orderId);
+    const { data, error } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId);
+    if (error) { console.error('getOrderItems error:', error); return []; }
+    return (data || []) as OrderItem[];
   }, []);
 
   const createOrder = useCallback(async (
     items: { product_id: string; product_name: string; product_image?: string; quantity: number; price: number }[],
     shippingAddress: any
   ) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: 'Please sign in', description: 'You need to be logged in to place an order.', variant: 'destructive' });
+      return { error: 'Not authenticated', order: null };
+    }
+
     setLoading(true);
     try {
       const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const orderNumber = `ORD-${Date.now()}`;
-      const orderId = crypto.randomUUID();
 
-      const order: Order = {
-        id: orderId,
-        order_number: orderNumber,
-        total_amount: totalAmount,
-        status: 'pending',
-        shipping_address: shippingAddress,
-        payment_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      // Create order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          order_number: orderNumber,
+          total_amount: totalAmount,
+          status: 'pending',
+          shipping_address: shippingAddress,
+          payment_status: 'pending',
+        })
+        .select()
+        .single();
 
-      const orderItems: OrderItem[] = items.map(item => ({
-        id: crypto.randomUUID(),
-        order_id: orderId,
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map(item => ({
+        order_id: order.id,
         product_id: item.product_id,
         product_name: item.product_name,
         product_image: item.product_image || null,
         quantity: item.quantity,
         price: item.price,
-        created_at: new Date().toISOString(),
       }));
 
-      const existingOrders = loadOrders();
-      existingOrders.unshift(order);
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(existingOrders));
-
-      const existingItems = loadOrderItems();
-      existingItems.push(...orderItems);
-      localStorage.setItem(ORDER_ITEMS_KEY, JSON.stringify(existingItems));
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) throw itemsError;
 
       toast({
         title: 'Order placed!',
@@ -104,8 +100,9 @@ export const useOrders = () => {
 
       return { error: null, order };
     } catch (error: any) {
+      console.error('createOrder error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      return { error: error.message };
+      return { error: error.message, order: null };
     } finally {
       setLoading(false);
     }
