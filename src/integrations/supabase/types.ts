@@ -181,6 +181,87 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          brand: string | null
+          category: string | null
+          color_variant: string | null
+          cost_price: number | null
+          created_at: string | null
+          customizable: boolean | null
+          featured: boolean | null
+          id: string
+          image_url_1: string
+          image_url_2: string | null
+          image_url_3: string | null
+          long_description: string | null
+          model_number: string | null
+          product_id: string
+          product_name: string
+          rating: number | null
+          regular_price: number
+          review_count: number | null
+          sale_price: number | null
+          short_description: string | null
+          stock: number
+          subcategory: string | null
+          tags: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          color_variant?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          customizable?: boolean | null
+          featured?: boolean | null
+          id?: string
+          image_url_1?: string
+          image_url_2?: string | null
+          image_url_3?: string | null
+          long_description?: string | null
+          model_number?: string | null
+          product_id: string
+          product_name: string
+          rating?: number | null
+          regular_price?: number
+          review_count?: number | null
+          sale_price?: number | null
+          short_description?: string | null
+          stock?: number
+          subcategory?: string | null
+          tags?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          color_variant?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          customizable?: boolean | null
+          featured?: boolean | null
+          id?: string
+          image_url_1?: string
+          image_url_2?: string | null
+          image_url_3?: string | null
+          long_description?: string | null
+          model_number?: string | null
+          product_id?: string
+          product_name?: string
+          rating?: number | null
+          regular_price?: number
+          review_count?: number | null
+          sale_price?: number | null
+          short_description?: string | null
+          stock?: number
+          subcategory?: string | null
+          tags?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
