@@ -65,6 +65,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          price: number
+          product_id: string
+          product_image: string | null
+          product_name: string
+          quantity: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          price: number
+          product_id: string
+          product_image?: string | null
+          product_name: string
+          quantity?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          price?: number
+          product_id?: string
+          product_image?: string | null
+          product_name?: string
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -219,6 +255,36 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wishlists: {
+        Row: {
+          added_at: string | null
+          id: string
+          price: number
+          product_id: string
+          product_image: string | null
+          product_name: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          id?: string
+          price?: number
+          product_id: string
+          product_image?: string | null
+          product_name: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string | null
+          id?: string
+          price?: number
+          product_id?: string
+          product_image?: string | null
+          product_name?: string
           user_id?: string
         }
         Relationships: []
