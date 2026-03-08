@@ -47,6 +47,7 @@ const App = () => (
           }}
         />
         <BrowserRouter>
+          <AuthRedirectHandler />
           <WelcomeModal />
           <Routes>
             <Route path="/" element={<Index />} />
