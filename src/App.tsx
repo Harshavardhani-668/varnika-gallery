@@ -27,6 +27,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
 import AdminUsers from "./pages/admin/AdminUsers";
 import Chatbot from "./components/Chatbot";
+import AuthRedirectHandler from "./components/AuthRedirectHandler";
 
 const queryClient = new QueryClient();
 
