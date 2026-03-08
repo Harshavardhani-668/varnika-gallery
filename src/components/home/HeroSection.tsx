@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useFeaturedProducts } from "@/hooks/useProducts";
+
+const HeroScene3D = lazy(() => import("@/components/hero/HeroScene3D"));
 
 const HeroSection = () => {
   const { data: featuredProducts, isLoading } = useFeaturedProducts();
