@@ -59,6 +59,11 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
+      {/* 3D Floating Gift Boxes */}
+      <Suspense fallback={null}>
+        <HeroScene3D />
+      </Suspense>
+
       {/* Warm cream gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-cream-dark to-background" />
       
