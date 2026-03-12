@@ -195,7 +195,6 @@ const Cart = () => {
                     >
                       {!user ? "Sign In to Checkout" : "Proceed to Checkout"}
                     </Button>
-                    </Button>
                   </CardFooter>
                 </Card>
               </div>
