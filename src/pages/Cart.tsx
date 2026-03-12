@@ -44,38 +44,13 @@ const Cart = () => {
     return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cartItems.length === 0) return;
-
-    // Require auth for checkout
     if (!user) {
-      navigate('/login?redirect=/cart');
+      navigate('/login?redirect=/checkout');
       return;
     }
-
-    setProcessingOrder(true);
-    
-    const orderItems = cartItems.map(item => ({
-      product_id: item.product_id,
-      product_name: item.product_name,
-      product_image: item.product_image || undefined,
-      quantity: item.quantity,
-      price: item.price,
-    }));
-
-    const shippingAddress = {
-      name: user?.user_metadata?.full_name || user?.email,
-      email: user?.email,
-    };
-
-    const { error, order } = await createOrder(orderItems, shippingAddress);
-
-    if (!error && order) {
-      await clearCart();
-      navigate('/orders');
-    }
-    
-    setProcessingOrder(false);
+    navigate('/checkout');
   };
 
   if (loading) {
