@@ -31,6 +31,7 @@ const AdminDashboard = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Admin Dashboard</h1>
           <div className="flex gap-3">
             <Button variant="outline" asChild><Link to="/admin/orders">All Orders</Link></Button>
+            <Button variant="outline" asChild><Link to="/admin/products">Products</Link></Button>
             <Button variant="outline" asChild><Link to="/admin/users">All Users</Link></Button>
           </div>
         </div>
