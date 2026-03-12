@@ -12,11 +12,9 @@ import { Minus, Plus, ShoppingCart, Trash2, Loader2 } from 'lucide-react';
 const Cart = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { getCart, updateCartItem, removeFromCart, clearCart } = useCart();
-  const { createOrder } = useOrders();
+  const { getCart, updateCartItem, removeFromCart } = useCart();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processingOrder, setProcessingOrder] = useState(false);
 
   useEffect(() => {
     loadCart();
