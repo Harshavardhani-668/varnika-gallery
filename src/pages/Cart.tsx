@@ -189,13 +189,12 @@ const Cart = () => {
                   <CardFooter>
                     <Button
                       onClick={handleCheckout}
-                      disabled={processingOrder}
                       variant="artisan"
                       size="xl"
                       className="w-full button-glow"
                     >
-                      {processingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       {!user ? "Sign In to Checkout" : "Proceed to Checkout"}
+                    </Button>
                     </Button>
                   </CardFooter>
                 </Card>
