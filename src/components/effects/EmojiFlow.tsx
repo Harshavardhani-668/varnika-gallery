@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 
 interface FloatingEmoji {
   id: number;
@@ -16,7 +16,7 @@ const EmojiFlow = memo(({ enabled = true }: { enabled?: boolean }) => {
   const [emojis, setEmojis] = useState<FloatingEmoji[]>([]);
 
   const handleClick = useCallback(
-    (e: React.MouseEvent) => {
+    (e: MouseEvent) => {
       if (!enabled) return;
       const id = ++emojiId;
       const emoji: FloatingEmoji = {
@@ -35,13 +35,19 @@ const EmojiFlow = memo(({ enabled = true }: { enabled?: boolean }) => {
     [enabled]
   );
 
-  if (!enabled) return null;
+  useEffect(() => {
+    if (!enabled) return;
+    // Listen on document so we don't block any clicks
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [enabled, handleClick]);
+
+  if (!enabled || emojis.length === 0) return null;
 
   return (
     <div
-      className="fixed inset-0 pointer-events-auto"
+      className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 50 }}
-      onClick={handleClick}
     >
       {emojis.map((e) => (
         <span
