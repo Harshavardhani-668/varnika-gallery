@@ -191,7 +191,7 @@ const GalleryGrid = () => {
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-baseline gap-3">
+                  <div className="flex items-baseline gap-3 mb-2">
                     {art.salePrice ? (
                       <>
                         <span className="font-display text-xl text-terracotta">
@@ -207,6 +207,12 @@ const GalleryGrid = () => {
                       </span>
                     )}
                   </div>
+
+                  {/* Delivery info */}
+                  <p className="text-xs text-muted-foreground font-body flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-sage" />
+                    Delivery in 5–7 days
+                  </p>
                 </div>
               </article>
             </Link>
