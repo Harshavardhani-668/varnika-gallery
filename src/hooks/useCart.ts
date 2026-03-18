@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface CartItem {
   id: string;
+  user_id: string;
   product_id: string;
   product_name: string;
   product_image: string | null;
@@ -12,28 +14,20 @@ export interface CartItem {
   updated_at: string;
 }
 
-// Local storage-based cart (no Supabase tables needed)
-const CART_KEY = 'varnika_cart';
-
-function loadCart(): CartItem[] {
-  try {
-    const stored = localStorage.getItem(CART_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCart(items: CartItem[]) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
-}
-
 export const useCart = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const getCart = useCallback(async (): Promise<CartItem[]> => {
-    return loadCart();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from('cart_items')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (error) { console.error('getCart error:', error); return []; }
+    return (data || []) as CartItem[];
   }, []);
 
   const addToCart = useCallback(async (
@@ -43,34 +37,45 @@ export const useCart = () => {
     quantity: number = 1,
     productImage?: string
   ) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: 'Please sign in', description: 'You need to be logged in to add items to cart.', variant: 'destructive' });
+      return { error: 'Not authenticated' };
+    }
     setLoading(true);
     try {
-      const cart = loadCart();
-      const existingIndex = cart.findIndex(item => item.product_id === productId);
+      // Check if item exists
+      const { data: existing } = await supabase
+        .from('cart_items')
+        .select('id, quantity')
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+        .maybeSingle();
 
-      if (existingIndex >= 0) {
-        cart[existingIndex].quantity += quantity;
-        cart[existingIndex].updated_at = new Date().toISOString();
+      if (existing) {
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ quantity: existing.quantity + quantity, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+        if (error) throw error;
       } else {
-        cart.push({
-          id: crypto.randomUUID(),
-          product_id: productId,
-          product_name: productName,
-          product_image: productImage || null,
-          quantity,
-          price,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
+        const { error } = await supabase
+          .from('cart_items')
+          .insert({
+            user_id: user.id,
+            product_id: productId,
+            product_name: productName,
+            product_image: productImage || null,
+            quantity,
+            price,
+          });
+        if (error) throw error;
       }
 
-      saveCart(cart);
-      toast({
-        title: 'Added to cart!',
-        description: `${productName} has been added to your cart.`,
-      });
+      toast({ title: 'Added to cart!', description: `${productName} has been added to your cart.` });
       return { error: null };
     } catch (error: any) {
+      console.error('addToCart error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
@@ -82,15 +87,14 @@ export const useCart = () => {
     setLoading(true);
     try {
       if (quantity <= 0) return await removeFromCart(itemId);
-      const cart = loadCart();
-      const index = cart.findIndex(item => item.id === itemId);
-      if (index >= 0) {
-        cart[index].quantity = quantity;
-        cart[index].updated_at = new Date().toISOString();
-        saveCart(cart);
-      }
+      const { error } = await supabase
+        .from('cart_items')
+        .update({ quantity, updated_at: new Date().toISOString() })
+        .eq('id', itemId);
+      if (error) throw error;
       return { error: null };
     } catch (error: any) {
+      console.error('updateCartItem error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
@@ -101,11 +105,12 @@ export const useCart = () => {
   const removeFromCart = useCallback(async (itemId: string) => {
     setLoading(true);
     try {
-      const cart = loadCart().filter(item => item.id !== itemId);
-      saveCart(cart);
+      const { error } = await supabase.from('cart_items').delete().eq('id', itemId);
+      if (error) throw error;
       toast({ title: 'Removed from cart', description: 'Item has been removed from your cart.' });
       return { error: null };
     } catch (error: any) {
+      console.error('removeFromCart error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
@@ -114,11 +119,15 @@ export const useCart = () => {
   }, [toast]);
 
   const clearCart = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Not authenticated' };
     setLoading(true);
     try {
-      saveCart([]);
+      const { error } = await supabase.from('cart_items').delete().eq('user_id', user.id);
+      if (error) throw error;
       return { error: null };
     } catch (error: any) {
+      console.error('clearCart error:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
       return { error: error.message };
     } finally {
