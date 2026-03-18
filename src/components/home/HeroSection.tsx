@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { ChevronDown, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ const HeroSection = () => {
     return () => clearInterval(timer);
   }, [featuredProducts?.length]);
 
-  const scrollToGallery = () => {
+  const scrollToContent = () => {
     document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -59,21 +59,21 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* 3D Floating Gift Boxes */}
+      {/* 3D scene */}
       <Suspense fallback={null}>
         <HeroScene3D />
       </Suspense>
 
-      {/* Warm cream gradient background */}
+      {/* Warm gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-cream-dark to-background" />
-      
-      {/* Subtle decorative blobs */}
+
+      {/* Decorative blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 right-20 w-[500px] h-[500px] rounded-full bg-gold/5 blur-3xl" />
         <div className="absolute bottom-20 left-10 w-[400px] h-[400px] rounded-full bg-pastel-pink/8 blur-3xl" />
       </div>
 
-      {/* Background Image if featured products exist */}
+      {/* Background images for featured products */}
       {hasFeatured && (
         <div className="absolute inset-0">
           {featuredProducts.map((item, index) => (
@@ -84,13 +84,9 @@ const HeroSection = () => {
                 index === currentSlide ? "opacity-100" : "opacity-0"
               )}
             >
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-background/30" />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent" />
+              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/40" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
             </div>
           ))}
         </div>
@@ -99,49 +95,51 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-10 varnika-container w-full py-32 md:py-40">
         <div className="max-w-2xl">
-          {/* Main heading - always show */}
+          {/* Badge */}
+          <div
+            className={cn(
+              "inline-flex items-center gap-2 px-4 py-2 bg-gold/10 rounded-full mb-6 transition-all duration-800 ease-boutique",
+              isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            )}
+          >
+            <Sparkles className="w-4 h-4 text-gold" />
+            <span className="text-sm text-gold font-body tracking-wide">Handcrafted with Love</span>
+          </div>
+
+          {/* Headline */}
           <h1
             className={cn(
-              "font-display text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-2 transition-all duration-800 ease-boutique",
+              "font-display text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-4 transition-all duration-800 ease-boutique",
               isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
           >
-            Varnika
+            Turn Your Memories Into{" "}
+            <span className="text-gradient-gold">Handmade Gifts</span>
           </h1>
-
-          <p
-            className={cn(
-              "font-display text-2xl md:text-3xl lg:text-4xl text-gold italic leading-tight mb-6 transition-all duration-800 ease-boutique",
-              isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-            )}
-            style={{ transitionDelay: "150ms" }}
-          >
-            Where Every Gift Becomes a Memory
-          </p>
 
           {/* Subheading */}
           <p
             className={cn(
-              "font-body text-muted-foreground text-base md:text-lg leading-relaxed mb-4 max-w-lg transition-all duration-800 ease-boutique",
+              "font-body text-muted-foreground text-lg md:text-xl leading-relaxed mb-4 max-w-lg transition-all duration-800 ease-boutique",
               isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
-            style={{ transitionDelay: "300ms" }}
+            style={{ transitionDelay: "200ms" }}
           >
-            Handcrafted with intention and wrapped in emotion — our creations are designed to celebrate feelings, not just occasions.
+            Custom photo frames, resin art, embroidery & more — designed to celebrate feelings, not just occasions.
           </p>
 
-          {/* Supporting line */}
+          {/* Supporting text */}
           <p
             className={cn(
-              "font-body text-muted-foreground/80 text-sm md:text-base leading-relaxed mb-10 max-w-md transition-all duration-800 ease-boutique",
+              "font-body text-muted-foreground/70 text-sm md:text-base leading-relaxed mb-10 max-w-md transition-all duration-800 ease-boutique",
               isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
-            style={{ transitionDelay: "450ms" }}
+            style={{ transitionDelay: "350ms" }}
           >
             From birthdays to once-in-a-lifetime moments, Varnika transforms love into something you can hold.
           </p>
 
-          {/* Dynamic product info if available */}
+          {/* Featured product info */}
           {currentArt && (
             <div
               className={cn(
@@ -175,22 +173,23 @@ const HeroSection = () => {
               "flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-800 ease-boutique",
               isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
-            style={{ transitionDelay: "600ms" }}
+            style={{ transitionDelay: "500ms" }}
           >
             <Link to="/collections">
               <Button variant="artisan" size="xl" className="group button-glow">
-                Explore Collections
+                Shop Now
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link to="/collections">
-              <Button variant="gallery" size="xl" className="group">
-                Customize Your Gift
+              <Button variant="reserve" size="xl" className="group">
+                <Sparkles className="w-5 h-5" />
+                Create Custom Gift
               </Button>
             </Link>
           </div>
 
-          {/* Slide Indicators */}
+          {/* Slide indicators */}
           {hasFeatured && (
             <div className="flex gap-3 mt-12">
               {featuredProducts.map((_, index) => (
@@ -210,9 +209,9 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Scroll Indicator */}
+      {/* Scroll indicator */}
       <button
-        onClick={scrollToGallery}
+        onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 text-muted-foreground hover:text-foreground transition-colors animate-gentle-bob"
       >
         <div className="flex flex-col items-center gap-2">
