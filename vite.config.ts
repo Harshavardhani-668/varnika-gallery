@@ -4,12 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  server: {
-    host: true,
-    port: 8080,
-    strictPort: false,
-    allowedHosts: true,
-  },
+  server: {},
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
