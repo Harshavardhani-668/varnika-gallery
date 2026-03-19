@@ -1,5 +1,6 @@
 import { useScrollReveal } from "@/hooks/useAnimations";
 import { cn } from "@/lib/utils";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 const StoryBanner = () => {
   const imageReveal = useScrollReveal<HTMLDivElement>();
@@ -26,10 +27,14 @@ const StoryBanner = () => {
             )}
           >
             <div className="relative aspect-[4/5] rounded-card overflow-hidden floating-shadow">
-              <img
+              <OptimizedImage
                 src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800&h=1000&fit=crop"
                 alt="Varnika crafting journey"
                 className="w-full h-full object-cover transition-transform duration-700 ease-boutique hover:scale-[1.03]"
+                containerClassName="w-full h-full"
+                optimizeWidth={900}
+                optimizeHeight={1100}
+                quality={70}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/20 to-transparent" />
             </div>

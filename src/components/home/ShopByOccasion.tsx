@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/useAnimations";
 import { cn } from "@/lib/utils";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 const occasions = [
   {
@@ -15,7 +16,7 @@ const occasions = [
   },
   {
     name: "Graduation Gifts",
-    image: "https://images.unsplash.com/photo-1523050854058-8df90110c476?w=400&h=500&fit=crop",
+    image: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=900&h=1200&fit=crop&auto=format&q=85",
     filter: "Graduation",
   },
   {
@@ -64,15 +65,19 @@ const ShopByOccasion = () => {
               key={occ.name}
               to={`/collections?category=${encodeURIComponent(occ.filter)}`}
               className={cn(
-                "group relative aspect-[3/4] rounded-2xl overflow-hidden transition-all duration-700 ease-boutique",
+                "group relative aspect-[3/4] rounded-2xl overflow-hidden transition-all duration-700 ease-boutique border border-white/25 shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.14)]",
                 reveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
               )}
               style={{ transitionDelay: `${(i + 1) * 120}ms` }}
             >
-              <img
+              <OptimizedImage
                 src={occ.image}
                 alt={occ.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-boutique group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-700 ease-boutique group-hover:scale-110"
+                containerClassName="absolute inset-0"
+                optimizeWidth={600}
+                optimizeHeight={800}
+                quality={70}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent" />
               <div className="absolute inset-0 bg-gold/0 group-hover:bg-gold/10 transition-colors duration-500" />

@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Heart, Share2, Star, Minus, Plus, 
-  Truck, Shield, MessageCircle, ZoomIn, ShoppingBag, Zap
+  Truck, Shield, ZoomIn, ShoppingBag, Zap
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useProduct, useProducts } from "@/hooks/useProducts";
@@ -15,6 +17,18 @@ import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import FloatingClouds from "@/components/effects/FloatingClouds";
+import OptimizedImage from "@/components/ui/optimized-image";
+
+interface ProductReview {
+  id: string;
+  reviewer_name: string;
+  user_id: string;
+  rating: number;
+  review_text: string;
+  review_image_url: string | null;
+  created_at: string;
+}
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -28,6 +42,14 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [isZoomed, setIsZoomed] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [eligibleOrderId, setEligibleOrderId] = useState<string | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewImageFile, setReviewImageFile] = useState<File | null>(null);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   // Track recently viewed
   useEffect(() => {
@@ -43,6 +65,168 @@ const ProductDetail = () => {
     }
   }, [product?.id, user?.id]);
 
+  const loadReviewData = useCallback(async () => {
+    if (!product?.id) {
+      setReviews([]);
+      setEligibleOrderId(null);
+      return;
+    }
+
+    setReviewsLoading(true);
+
+    const { data: reviewRows } = await supabase
+      .from('reviews')
+      .select('id, user_id, rating, review_text, review_image_url, created_at')
+      .eq('product_id', product.id)
+      .order('created_at', { ascending: false });
+
+    const rawReviews = (reviewRows || []) as Omit<ProductReview, 'reviewer_name'>[];
+
+    const reviewerIds = [...new Set(rawReviews.map((review) => review.user_id))];
+    const nameMap: Record<string, string> = {};
+    if (reviewerIds.length > 0) {
+      const { data: profileRows } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', reviewerIds);
+
+      for (const profile of profileRows || []) {
+        nameMap[profile.id] = profile.full_name || 'Anonymous';
+      }
+    }
+
+    setReviews(
+      rawReviews.map((review) => ({
+        ...review,
+        reviewer_name: nameMap[review.user_id] || 'Anonymous',
+      }))
+    );
+
+    if (user) {
+      const { data: userOrders } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id);
+
+      const orderIds = (userOrders || []).map((order) => order.id);
+      if (orderIds.length === 0) {
+        setEligibleOrderId(null);
+        setReviewsLoading(false);
+        return;
+      }
+
+      const { data: purchasedItems } = await supabase
+        .from('order_items')
+        .select('order_id')
+        .eq('product_id', product.id)
+        .in('order_id', orderIds);
+
+      const purchasedOrderIds = [...new Set((purchasedItems || []).map((item) => item.order_id))];
+
+      if (purchasedOrderIds.length === 0) {
+        setEligibleOrderId(null);
+        setReviewsLoading(false);
+        return;
+      }
+
+      const { data: existingReviews } = await supabase
+        .from('reviews')
+        .select('order_id')
+        .eq('user_id', user.id)
+        .eq('product_id', product.id)
+        .in('order_id', purchasedOrderIds);
+
+      const alreadyReviewedOrderIds = new Set((existingReviews || []).map((row) => row.order_id));
+      const availableOrderId = purchasedOrderIds.find((orderId) => !alreadyReviewedOrderIds.has(orderId)) || null;
+      setEligibleOrderId(availableOrderId);
+    } else {
+      setEligibleOrderId(null);
+    }
+
+    setReviewsLoading(false);
+  }, [product?.id, user?.id]);
+
+  useEffect(() => {
+    loadReviewData();
+  }, [loadReviewData]);
+
+  const submitReview = async () => {
+    if (!product || !user) {
+      toast.error("Please sign in to review");
+      return;
+    }
+
+    if (!eligibleOrderId) {
+      toast.error("Review not eligible", {
+        description: "You can review this product only after a confirmed purchase.",
+      });
+      return;
+    }
+
+    if (reviewRating < 1 || reviewRating > 5) {
+      toast.error("Please provide a star rating");
+      return;
+    }
+
+    if (!reviewText.trim()) {
+      toast.error("Please write a review");
+      return;
+    }
+
+    setSubmittingReview(true);
+
+    try {
+      let reviewImageUrl: string | null = null;
+
+      if (reviewImageFile) {
+        const ext = reviewImageFile.name.split('.').pop() || 'jpg';
+        const filePath = `${user.id}/${product.id}-${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('review-images')
+          .upload(filePath, reviewImageFile, { upsert: false });
+
+        if (uploadError) {
+          toast.error("Image upload failed", { description: uploadError.message });
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('review-images').getPublicUrl(filePath);
+        reviewImageUrl = publicUrlData.publicUrl;
+      }
+
+      const { error } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: user.id,
+          order_id: eligibleOrderId,
+          product_id: product.id,
+          rating: reviewRating,
+          review_text: reviewText.trim(),
+          review_image_url: reviewImageUrl,
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.error("Duplicate review", {
+            description: "You have already reviewed this purchased item.",
+          });
+        } else {
+          toast.error("Unable to submit review", { description: error.message });
+        }
+        return;
+      }
+
+      toast.success("Thank you for your review ❤️");
+      setReviewRating(0);
+      setReviewText("");
+      setReviewImageFile(null);
+      setIsReviewModalOpen(false);
+      await loadReviewData();
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const images = product
     ? [product.imageUrl, product.imageUrl2, product.imageUrl3].filter(Boolean)
     : [];
@@ -52,6 +236,19 @@ const ProductDetail = () => {
   ).slice(0, 4) || [];
 
   const isLiked = product ? isInWishlist(product.id) : false;
+  const averageRating = reviews.length > 0
+    ? Number((reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1))
+    : product.rating || 0;
+  const totalReviews = reviews.length > 0 ? reviews.length : product.reviewCount;
+  const ratingBreakdown = [5, 4, 3, 2, 1].map((star) => {
+    const count = reviews.filter((review) => review.rating === star).length;
+    const percent = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
+    return { star, count, percent };
+  });
+  const topReviews = reviews.filter((review) => review.rating >= 5).slice(0, 2);
+  const reviewImages = reviews
+    .filter((review) => Boolean(review.review_image_url))
+    .map((review) => ({ id: review.id, imageUrl: review.review_image_url as string }));
 
   const handleAddToCart = async () => {
     if (!product) return;
@@ -103,14 +300,6 @@ const ProductDetail = () => {
     }
   };
 
-  const handleWhatsApp = () => {
-    if (!product) return;
-    const message = encodeURIComponent(
-      `Hi! I'm interested in customizing "${product.name}" (${product.modelNumber}). Can you help me with the options?`
-    );
-    window.open(`https://wa.me/919876543210?text=${message}`, "_blank");
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -159,7 +348,9 @@ const ProductDetail = () => {
       <Header />
       
       <main className="pt-24 pb-16">
-        <div className="varnika-container">
+        <section className="relative overflow-hidden">
+          <FloatingClouds count={3} />
+          <div className="varnika-container relative z-10">
           {/* Breadcrumb */}
           <div className="mb-8">
             <Link
@@ -178,13 +369,18 @@ const ProductDetail = () => {
                 className="relative aspect-[4/3] rounded-card overflow-hidden bg-cream-dark cursor-zoom-in group"
                 onClick={() => setIsZoomed(!isZoomed)}
               >
-                <img
+                <OptimizedImage
                   src={images[selectedImage] || product.imageUrl}
                   alt={product.name}
                   className={cn(
                     "w-full h-full object-cover transition-transform duration-600 ease-boutique",
                     isZoomed ? "scale-150" : "scale-100"
                   )}
+                  containerClassName="w-full h-full"
+                  optimizeWidth={1100}
+                  optimizeHeight={900}
+                  quality={74}
+                  eager
                   onError={(e) => {
                     e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&h=800&fit=crop";
                   }}
@@ -208,7 +404,15 @@ const ProductDetail = () => {
                           : "opacity-60 hover:opacity-100"
                       )}
                     >
-                      <img src={img} alt={`View ${index + 1}`} className="w-full h-full object-cover" />
+                      <OptimizedImage
+                        src={img}
+                        alt={`View ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                        optimizeWidth={200}
+                        optimizeHeight={200}
+                        quality={68}
+                      />
                     </button>
                   ))}
                 </div>
@@ -312,24 +516,24 @@ const ProductDetail = () => {
                 {/* Primary Actions */}
                 <div className="flex flex-col gap-3">
                   <Button
-                    variant="artisan"
+                    variant="outline"
                     size="xl"
-                    className="w-full button-glow"
-                    onClick={handleAddToCart}
+                    className="w-full rounded-xl"
+                    onClick={handleBuyNow}
                     disabled={product.stock === 0 || addingToCart}
                   >
                     <ShoppingBag className="w-5 h-5 mr-2" />
-                    {product.stock === 0 ? "Join Waitlist" : addingToCart ? "Adding..." : "Add to Cart"}
+                    {product.stock === 0 ? "Join Waitlist" : addingToCart ? "Processing..." : "Buy Standard"}
                   </Button>
 
                   <Button
                     size="xl"
-                    className="w-full bg-gold hover:bg-gold-light text-foreground font-body font-semibold text-base"
-                    onClick={handleBuyNow}
-                    disabled={product.stock === 0 || addingToCart}
+                    className="w-full bg-gold hover:bg-gold-light text-foreground font-body font-semibold text-base button-glow"
+                    onClick={() => navigate(`/customize/${product.id}`)}
+                    disabled={product.stock === 0}
                   >
                     <Zap className="w-5 h-5 mr-2" />
-                    Buy Now
+                    {product.stock === 0 ? "Join Waitlist" : "Customize This Product"}
                   </Button>
                 </div>
 
@@ -350,12 +554,6 @@ const ProductDetail = () => {
                   </Button>
                 </div>
 
-                {product.customizable && (
-                  <Button variant="outline" size="lg" className="w-full gap-2 rounded-xl" onClick={handleWhatsApp}>
-                    <MessageCircle className="w-5 h-5" />
-                    Customize via WhatsApp
-                  </Button>
-                )}
               </div>
 
               {/* Trust Badges */}
@@ -411,6 +609,234 @@ const ProductDetail = () => {
             </div>
           </div>
 
+          {/* Reviews */}
+          <div className="mt-20 pt-12 border-t border-border">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <h2 className="font-display text-3xl text-foreground">Customer Reviews</h2>
+              {user && eligibleOrderId && (
+                <Button
+                  type="button"
+                  variant="artisan"
+                  className="w-full md:w-auto"
+                  onClick={() => setIsReviewModalOpen(true)}
+                >
+                  Rate this Product
+                </Button>
+              )}
+            </div>
+
+            <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 mb-8">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-card border border-border rounded-card p-4">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-body mb-1">Average Rating</p>
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 text-gold fill-gold" />
+                    <p className="font-display text-2xl text-foreground">{averageRating.toFixed(1)}/5</p>
+                  </div>
+                </div>
+                <div className="bg-card border border-border rounded-card p-4">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-body mb-1">Total Reviews</p>
+                  <p className="font-display text-2xl text-foreground">{totalReviews}</p>
+                </div>
+              </div>
+
+              <div className="bg-card border border-border rounded-card p-4">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground font-body mb-1">Average Rating</p>
+                <div className="space-y-2 mt-3">
+                  {ratingBreakdown.map((item) => (
+                    <div key={item.star} className="grid grid-cols-[34px_1fr_42px] items-center gap-2">
+                      <span className="text-sm font-body text-foreground">{item.star}★</span>
+                      <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-gold" style={{ width: `${item.percent}%` }} />
+                      </div>
+                      <span className="text-xs text-muted-foreground font-body text-right">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {!user && (
+              <p className="font-body text-sm text-muted-foreground mb-8">
+                Sign in and purchase this product to leave a review.
+              </p>
+            )}
+
+            {user && !eligibleOrderId && (
+              <p className="font-body text-sm text-muted-foreground mb-8">
+                You can review this product after purchase. One review is allowed per purchased order.
+              </p>
+            )}
+
+            {topReviews.length > 0 && (
+              <div className="mb-8">
+                <p className="font-body text-xs uppercase tracking-[0.2em] text-gold mb-3">Top Reviews</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {topReviews.map((review) => (
+                    <article key={`top-${review.id}`} className="bg-gold/10 border border-gold/30 rounded-card p-4">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <p className="font-body text-sm font-semibold text-foreground">{review.reviewer_name}</p>
+                        <span className="text-xs text-muted-foreground font-body">
+                          {new Date(review.created_at).toLocaleDateString('en-IN')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={`top-${review.id}-${star}`}
+                            className={cn("w-4 h-4", review.rating >= star ? "text-gold fill-gold" : "text-muted")}
+                          />
+                        ))}
+                      </div>
+                      <p className="font-body text-sm text-foreground line-clamp-3">{review.review_text}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {reviewImages.length > 0 && (
+              <div className="mb-8">
+                <p className="font-body text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Review Photos</p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                  {reviewImages.map((item) => (
+                    <div key={`img-${item.id}`} className="aspect-square rounded-xl overflow-hidden border border-border bg-card">
+                      <OptimizedImage
+                        src={item.imageUrl}
+                        alt="Customer review photo"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                        optimizeWidth={240}
+                        optimizeHeight={240}
+                        quality={68}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {reviewsLoading ? (
+              <Skeleton className="h-24 w-full" />
+            ) : reviews.length === 0 ? (
+              <p className="font-body text-sm text-muted-foreground">No reviews yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <article key={review.id} className={cn(
+                    "bg-card border border-border rounded-card p-5",
+                    review.rating >= 5 ? "border-gold/40" : ""
+                  )}>
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-body text-sm font-semibold text-foreground">{review.reviewer_name}</p>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-body uppercase tracking-wide bg-sage/20 text-sage">
+                            Verified Buyer
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={`${review.id}-${star}`}
+                              className={cn(
+                                "w-4 h-4",
+                                review.rating >= star ? "text-gold fill-gold" : "text-muted"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground font-body">
+                        {new Date(review.created_at).toLocaleDateString('en-IN')}
+                      </span>
+                    </div>
+                    <p className="font-body text-sm text-foreground leading-relaxed whitespace-pre-line mb-3">
+                      {review.review_text}
+                    </p>
+                    {review.review_image_url && (
+                      <OptimizedImage
+                        src={review.review_image_url}
+                        alt="Review upload"
+                        className="w-28 h-28 rounded-xl object-cover border border-border"
+                        optimizeWidth={240}
+                        optimizeHeight={240}
+                        quality={68}
+                      />
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+
+            <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
+              <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="font-display text-2xl">Rate this Product</DialogTitle>
+                  <DialogDescription>
+                    Share your purchase experience to help other customers choose confidently.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-5 py-2">
+                  <div>
+                    <p className="text-sm font-body text-muted-foreground mb-2">Your Rating</p>
+                    <div className="flex items-center gap-2" aria-label="Select star rating">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={`rate-${star}`}
+                          type="button"
+                          onClick={() => setReviewRating(star)}
+                          className="w-11 h-11 rounded-full border border-border flex items-center justify-center active:scale-95 transition-transform"
+                        >
+                          <Star
+                            className={cn(
+                              "w-6 h-6 transition-colors",
+                              reviewRating >= star ? "text-gold fill-gold" : "text-muted"
+                            )}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-body text-muted-foreground mb-2">Your Review</p>
+                    <Textarea
+                      placeholder="Tell us what you liked about the product"
+                      className="min-h-[140px] text-base"
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-body text-muted-foreground">Upload image (optional)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setReviewImageFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-gold/15 file:px-3 file:py-2"
+                    />
+                    {reviewImageFile && (
+                      <p className="text-xs text-muted-foreground">Selected: {reviewImageFile.name}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="artisan"
+                    className="w-full"
+                    onClick={submitReview}
+                    disabled={submittingReview || reviewsLoading}
+                  >
+                    {submittingReview ? "Submitting..." : "Submit Review"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
           {/* Related Products */}
           {relatedProducts.length > 0 && (
             <div className="mt-20 pt-12 border-t border-border">
@@ -419,10 +845,14 @@ const ProductDetail = () => {
                 {relatedProducts.map(p => (
                   <Link key={p.id} to={`/product/${p.id}`} className="group">
                     <div className="aspect-[3/4] rounded-card overflow-hidden mb-3 bg-cream-dark">
-                      <img
+                      <OptimizedImage
                         src={p.imageUrl}
                         alt={p.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        containerClassName="w-full h-full"
+                        optimizeWidth={480}
+                        optimizeHeight={640}
+                        quality={70}
                         onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300&h=400&fit=crop"; }}
                       />
                     </div>
@@ -435,7 +865,8 @@ const ProductDetail = () => {
               </div>
             </div>
           )}
-        </div>
+          </div>
+        </section>
       </main>
 
       {/* Mobile sticky CTA */}

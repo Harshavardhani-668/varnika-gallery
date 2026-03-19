@@ -1,22 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import TrustStrip from "@/components/home/TrustStrip";
 import ShopByOccasion from "@/components/home/ShopByOccasion";
-import BestSellers from "@/components/home/BestSellers";
 import HowItWorks from "@/components/home/HowItWorks";
 import GalleryGrid from "@/components/home/GalleryGrid";
-import StoryBanner from "@/components/home/StoryBanner";
-import WhyVarnika from "@/components/home/WhyVarnika";
-import Testimonials from "@/components/home/Testimonials";
+import InstagramSection from "@/components/home/InstagramSection";
 import FinalCTA from "@/components/home/FinalCTA";
 import Newsletter from "@/components/home/Newsletter";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import EmojiFlow from "@/components/effects/EmojiFlow";
 
 const Index = () => {
   const [emojiEnabled, setEmojiEnabled] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px)");
+    const sync = () => setEmojiEnabled(!media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   return (
     <div className="min-h-screen relative">
@@ -26,17 +31,13 @@ const Index = () => {
         <HeroSection />
         <TrustStrip />
         <ShopByOccasion />
-        <BestSellers />
         <HowItWorks />
         <GalleryGrid />
-        <StoryBanner />
-        <WhyVarnika />
-        <Testimonials />
+        <InstagramSection />
         <FinalCTA />
         <Newsletter />
       </main>
       <Footer />
-      <WhatsAppButton />
       {/* Emoji toggle */}
       <button
         onClick={(e) => {

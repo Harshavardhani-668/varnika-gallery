@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProducts";
 import { useScrollReveal, useStaggeredReveal } from "@/hooks/useAnimations";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 const GalleryGrid = () => {
   const { data: products, isLoading } = useProducts();
@@ -102,10 +103,14 @@ const GalleryGrid = () => {
               >
                 {/* Image Container */}
                 <div className="image-reveal aspect-auto overflow-hidden">
-                  <img
+                  <OptimizedImage
                     src={art.imageUrl}
                     alt={art.name}
                     className="w-full h-full object-cover transition-transform duration-700 ease-boutique group-hover:scale-[1.03]"
+                    containerClassName="w-full h-full"
+                    optimizeWidth={760}
+                    optimizeHeight={1000}
+                    quality={72}
                     onError={(e) => {
                       e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=800&fit=crop";
                     }}

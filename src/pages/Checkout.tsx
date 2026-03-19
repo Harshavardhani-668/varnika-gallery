@@ -129,6 +129,8 @@ const Checkout = () => {
       product_image: item.product_image || undefined,
       quantity: item.quantity,
       price: item.price,
+      is_custom: item.is_custom,
+      customization_data: item.customization_data,
     }));
 
     const { error, order } = await createOrder(orderItems, address);

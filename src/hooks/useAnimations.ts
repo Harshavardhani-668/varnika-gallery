@@ -56,6 +56,15 @@ export function useStaggeredReveal(itemCount: number, delayMs: number = 100) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px)").matches;
+
+    if (reduceMotion) {
+      setVisibleItems(new Set(Array.from({ length: itemCount }, (_, idx) => idx)));
+      return;
+    }
+
     const container = containerRef.current;
     if (!container) return;
 

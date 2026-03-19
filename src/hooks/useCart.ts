@@ -1,9 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export interface CartItem {
+  customization_data: Json | null;
   id: string;
+  is_custom: boolean;
   user_id: string;
   product_id: string;
   product_name: string;
@@ -35,7 +38,11 @@ export const useCart = () => {
     productName: string,
     price: number,
     quantity: number = 1,
-    productImage?: string
+    productImage?: string,
+    options?: {
+      is_custom?: boolean;
+      customization_data?: Json;
+    }
   ) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -68,6 +75,8 @@ export const useCart = () => {
             product_image: productImage || null,
             quantity,
             price,
+            is_custom: options?.is_custom === true,
+            customization_data: options?.customization_data || null,
           });
         if (error) throw error;
       }

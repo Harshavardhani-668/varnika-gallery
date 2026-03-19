@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react";
+import { Mail, Phone, Instagram, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import FloatingClouds from "@/components/effects/FloatingClouds";
 
 const Contact = () => {
   const [loading, setLoading] = useState(false);
@@ -27,8 +28,9 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <section className="pt-32 pb-12">
-        <div className="varnika-container text-center">
+      <section className="relative pt-32 pb-12 overflow-hidden">
+        <FloatingClouds count={3} />
+        <div className="varnika-container relative z-10 text-center">
           <span className="text-gold text-sm tracking-widest uppercase font-body">Get in Touch</span>
           <h1 className="font-display text-4xl md:text-6xl text-foreground mt-4 mb-4">Contact Us</h1>
           <p className="text-muted-foreground font-body max-w-xl mx-auto">
@@ -44,8 +46,8 @@ const Contact = () => {
             <div className="space-y-6">
               {[
                 { icon: Mail, label: "Email", value: "varnika.atelier@gmail.com", href: "mailto:varnika.atelier@gmail.com" },
-                { icon: Phone, label: "Phone", value: "+91 98765 43210", href: "tel:+919876543210" },
-                { icon: MapPin, label: "Location", value: "Handmade Studio, India", href: null },
+                { icon: Phone, label: "Phone", value: "6305193711", href: "tel:6305193711" },
+                { icon: Instagram, label: "Instagram", value: "@varnika_atelier", href: "https://www.instagram.com/varnika_atelier/" },
               ].map(item => (
                 <Card key={item.label} className="border-border/50">
                   <CardContent className="flex items-start gap-4 p-6">

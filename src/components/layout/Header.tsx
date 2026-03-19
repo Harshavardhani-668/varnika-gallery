@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, Heart, Search, ShoppingBag, User, LogOut, Package, Sparkles } from "lucide-react";
+import { Menu, X, Heart, Search, ShoppingBag, User, LogOut, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,9 +74,8 @@ const Header = () => {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "Shop", href: "/collections" },
-    { name: "Gallery", href: "/gallery" },
     { name: "About", href: "/about" },
+    { name: "Shop", href: "/collections" },
     { name: "Contact", href: "/contact" },
   ];
 
@@ -112,13 +111,6 @@ const Header = () => {
                   <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold group-hover:w-full transition-all duration-300" />
                 </Link>
               ))}
-              {/* Highlighted Custom Gifts CTA */}
-              <Link to="/collections">
-                <Button size="sm" variant="reserve" className="rounded-full px-5 h-9 text-xs gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Custom Gifts
-                </Button>
-              </Link>
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -227,13 +219,6 @@ const Header = () => {
                   {link.name}
                 </Link>
               ))}
-              {/* Highlighted Custom Gifts on mobile */}
-              <Link to="/collections" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="reserve" size="lg" className="gap-2 mt-2">
-                  <Sparkles className="w-5 h-5" />
-                  Custom Gifts
-                </Button>
-              </Link>
 
               <div className="flex items-center gap-6 mt-6">
                 <Button variant="ghost" size="icon" onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}>

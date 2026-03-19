@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProducts";
 import { useScrollReveal } from "@/hooks/useAnimations";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 const BestSellers = () => {
   const { data: products, isLoading } = useProducts();
@@ -80,10 +81,14 @@ const BestSellers = () => {
               style={{ transitionDelay: `${(i + 1) * 80}ms` }}
             >
               <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark mb-3">
-                <img
+                <OptimizedImage
                   src={product.imageUrl}
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 ease-boutique group-hover:scale-105"
+                  containerClassName="w-full h-full"
+                  optimizeWidth={720}
+                  optimizeHeight={960}
+                  quality={72}
                   onError={(e) => {
                     e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=800&fit=crop";
                   }}

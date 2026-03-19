@@ -60,6 +60,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<Profile>({ full_name: '', phone: '', email: '' });
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [orderCustomFlags, setOrderCustomFlags] = useState<Record<string, boolean>>({});
   const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewed[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -100,7 +101,30 @@ const Dashboard = () => {
 
   const loadOrders = async () => {
     const { data } = await supabase.from('orders').select('*').eq('user_id', user!.id).order('created_at', { ascending: false });
-    if (data) setOrders(data as Order[]);
+    if (data) {
+      const loadedOrders = data as Order[];
+      setOrders(loadedOrders);
+
+      const orderIds = loadedOrders.map((order) => order.id);
+      if (orderIds.length > 0) {
+        const { data: orderItemFlags } = await supabase
+          .from('order_items')
+          .select('order_id, is_custom')
+          .in('order_id', orderIds);
+
+        if (orderItemFlags) {
+          const nextFlags: Record<string, boolean> = {};
+          for (const row of orderItemFlags as { order_id: string; is_custom: boolean }[]) {
+            if (row.is_custom) {
+              nextFlags[row.order_id] = true;
+            } else if (!(row.order_id in nextFlags)) {
+              nextFlags[row.order_id] = false;
+            }
+          }
+          setOrderCustomFlags(nextFlags);
+        }
+      }
+    }
   };
 
   const loadRecentlyViewed = async () => {
@@ -145,16 +169,6 @@ const Dashboard = () => {
   const handleDeleteAddress = async (id: string) => {
     await supabase.from('addresses').delete().eq('id', id);
     await loadAddresses();
-  };
-
-  const statusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'bg-gold/20 text-gold',
-      processing: 'bg-accent/20 text-accent-foreground',
-      completed: 'bg-sage/20 text-sage',
-      cancelled: 'bg-destructive/20 text-destructive',
-    };
-    return <span className={`px-2 py-1 rounded-full text-xs font-body ${colors[status] || 'bg-muted text-muted-foreground'}`}>{status}</span>;
   };
 
   if (loading) {
@@ -279,10 +293,17 @@ const Dashboard = () => {
                           <div className="font-body">
                             <p className="text-sm font-medium text-foreground">{order.order_number}</p>
                             <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            {orderCustomFlags[order.id] ? (
+                              <div className="mt-2">
+                                <p className="text-sm text-gold">Customization under review</p>
+                                <p className="text-xs text-muted-foreground">We will contact you within a few hours</p>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-sage mt-2">Order Confirmed</p>
+                            )}
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-display text-foreground">₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
-                            {statusBadge(order.status)}
                           </div>
                         </div>
                       ))}

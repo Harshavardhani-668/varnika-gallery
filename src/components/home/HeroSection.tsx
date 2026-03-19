@@ -1,18 +1,31 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useFeaturedProducts } from "@/hooks/useProducts";
+import FloatingClouds from "@/components/effects/FloatingClouds";
 
 const HeroScene3D = lazy(() => import("@/components/hero/HeroScene3D"));
 
 const HeroSection = () => {
+  const sectionRef = useRef<HTMLElement>(null);
   const { data: featuredProducts, isLoading } = useFeaturedProducts();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showScene3D, setShowScene3D] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px)");
+    const sync = () => setReduceMotion(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -20,6 +33,34 @@ const HeroSection = () => {
   }, []);
 
   useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isSmallScreen = window.matchMedia("(max-width: 767px)").matches;
+
+    if (prefersReducedMotion || isSmallScreen) {
+      return;
+    }
+
+    if ("requestIdleCallback" in window) {
+      const id = (window as Window & {
+        requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number;
+      }).requestIdleCallback(() => setShowScene3D(true), { timeout: 2500 });
+
+      return () => {
+        const cancelIdle = (window as Window & {
+          cancelIdleCallback?: (idleId: number) => void;
+        }).cancelIdleCallback;
+        if (cancelIdle) {
+          cancelIdle(id);
+        }
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => setShowScene3D(true), 1200);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) return;
     if (!featuredProducts?.length) return;
     const timer = setInterval(() => {
       setIsAnimating(true);
@@ -29,7 +70,44 @@ const HeroSection = () => {
       }, 500);
     }, 6000);
     return () => clearInterval(timer);
-  }, [featuredProducts?.length]);
+  }, [featuredProducts?.length, reduceMotion]);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section || reduceMotion) return;
+
+    let frameId = 0;
+
+    const handleMove = (event: MouseEvent) => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+
+      frameId = requestAnimationFrame(() => {
+        const rect = section.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width;
+        const y = (event.clientY - rect.top) / rect.height;
+        section.style.setProperty("--hero-x", `${Math.max(0, Math.min(1, x))}`);
+        section.style.setProperty("--hero-y", `${Math.max(0, Math.min(1, y))}`);
+      });
+    };
+
+    const handleLeave = () => {
+      section.style.setProperty("--hero-x", "0.5");
+      section.style.setProperty("--hero-y", "0.45");
+    };
+
+    section.addEventListener("mousemove", handleMove, { passive: true });
+    section.addEventListener("mouseleave", handleLeave, { passive: true });
+
+    return () => {
+      section.removeEventListener("mousemove", handleMove);
+      section.removeEventListener("mouseleave", handleLeave);
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [reduceMotion]);
 
   const scrollToContent = () => {
     document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
@@ -58,37 +136,81 @@ const HeroSection = () => {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* 3D scene */}
-      <Suspense fallback={null}>
-        <HeroScene3D />
-      </Suspense>
+    <section
+      ref={sectionRef}
+      className="relative min-h-screen flex items-center overflow-hidden"
+      style={{
+        "--hero-x": "0.5",
+        "--hero-y": "0.45",
+      } as React.CSSProperties}
+    >
+      {/* 3D scene is deferred to idle time on larger screens */}
+      {showScene3D && (
+        <Suspense fallback={null}>
+          <HeroScene3D />
+        </Suspense>
+      )}
+
+      <FloatingClouds count={reduceMotion ? 2 : 4} />
 
       {/* Warm gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-cream-dark to-background" />
+
+      {/* Cursor-reactive premium pastel glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(36rem 36rem at calc(var(--hero-x) * 100%) calc(var(--hero-y) * 100%), rgba(245,198,208,0.24), rgba(212,184,224,0.12) 45%, transparent 70%)",
+          transition: "background 180ms ease-out",
+        }}
+      />
 
       {/* Decorative blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 right-20 w-[500px] h-[500px] rounded-full bg-gold/5 blur-3xl" />
         <div className="absolute bottom-20 left-10 w-[400px] h-[400px] rounded-full bg-pastel-pink/8 blur-3xl" />
+        <div
+          className="absolute top-[18%] left-[14%] w-56 h-56 rounded-full blur-3xl"
+          style={{
+            background: "rgba(212, 184, 224, 0.18)",
+            transform: "translate3d(calc((var(--hero-x) - 0.5) * -30px), calc((var(--hero-y) - 0.5) * -22px), 0)",
+            transition: "transform 180ms ease-out",
+          }}
+        />
+        <div
+          className="absolute bottom-[12%] right-[12%] w-64 h-64 rounded-full blur-3xl"
+          style={{
+            background: "rgba(181, 216, 204, 0.16)",
+            transform: "translate3d(calc((var(--hero-x) - 0.5) * 26px), calc((var(--hero-y) - 0.5) * 18px), 0)",
+            transition: "transform 200ms ease-out",
+          }}
+        />
       </div>
 
       {/* Background images for featured products */}
       {hasFeatured && (
         <div className="absolute inset-0">
-          {featuredProducts.map((item, index) => (
+          {currentArt && (
             <div
-              key={item.id}
+              key={currentArt.id}
               className={cn(
                 "absolute inset-0 transition-opacity duration-1000 ease-boutique",
-                index === currentSlide ? "opacity-100" : "opacity-0"
+                isAnimating ? "opacity-85" : "opacity-100"
               )}
             >
-              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+              <img
+                src={currentArt.imageUrl}
+                alt={currentArt.name}
+                className="w-full h-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+              />
               <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/40" />
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
             </div>
-          ))}
+          )}
         </div>
       )}
 
@@ -98,9 +220,12 @@ const HeroSection = () => {
           {/* Badge */}
           <div
             className={cn(
-              "inline-flex items-center gap-2 px-4 py-2 bg-gold/10 rounded-full mb-6 transition-all duration-800 ease-boutique",
+              "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 transition-all duration-800 ease-boutique border border-white/35 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-sm",
               isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
+            style={{
+              background: "linear-gradient(120deg, rgba(245,198,208,0.36), rgba(232,213,183,0.34), rgba(212,184,224,0.30))",
+            }}
           >
             <Sparkles className="w-4 h-4 text-gold" />
             <span className="text-sm text-gold font-body tracking-wide">Handcrafted with Love</span>
@@ -176,13 +301,27 @@ const HeroSection = () => {
             style={{ transitionDelay: "500ms" }}
           >
             <Link to="/collections">
-              <Button variant="artisan" size="xl" className="group button-glow">
+              <Button
+                variant="artisan"
+                size="xl"
+                className="group button-glow border border-white/30 shadow-[0_14px_34px_rgba(164,131,196,0.30)]"
+                style={{
+                  background: "linear-gradient(135deg, hsl(347 73% 85%), hsl(272 41% 73%))",
+                }}
+              >
                 Shop Now
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link to="/collections">
-              <Button variant="reserve" size="xl" className="group">
+              <Button
+                variant="reserve"
+                size="xl"
+                className="group border border-white/45 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+                style={{
+                  background: "linear-gradient(135deg, rgba(245,240,235,0.95), rgba(232,213,183,0.75))",
+                }}
+              >
                 <Sparkles className="w-5 h-5" />
                 Create Custom Gift
               </Button>

@@ -67,8 +67,10 @@ export type Database = {
       }
       cart_items: {
         Row: {
+          customization_data: Json | null
           created_at: string | null
           id: string
+          is_custom: boolean
           price: number
           product_id: string
           product_image: string | null
@@ -78,8 +80,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          customization_data?: Json | null
           created_at?: string | null
           id?: string
+          is_custom?: boolean
           price: number
           product_id: string
           product_image?: string | null
@@ -89,8 +93,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          customization_data?: Json | null
           created_at?: string | null
           id?: string
+          is_custom?: boolean
           price?: number
           product_id?: string
           product_image?: string | null
@@ -103,8 +109,10 @@ export type Database = {
       }
       order_items: {
         Row: {
+          customization_data: Json | null
           created_at: string | null
           id: string
+          is_custom: boolean
           order_id: string
           price: number
           product_id: string
@@ -113,8 +121,10 @@ export type Database = {
           quantity: number
         }
         Insert: {
+          customization_data?: Json | null
           created_at?: string | null
           id?: string
+          is_custom?: boolean
           order_id: string
           price: number
           product_id: string
@@ -123,8 +133,10 @@ export type Database = {
           quantity?: number
         }
         Update: {
+          customization_data?: Json | null
           created_at?: string | null
           id?: string
+          is_custom?: boolean
           order_id?: string
           price?: number
           product_id?: string
@@ -261,6 +273,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          rating: number
+          review_image_url: string | null
+          review_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          rating: number
+          review_image_url?: string | null
+          review_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          rating?: number
+          review_image_url?: string | null
+          review_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

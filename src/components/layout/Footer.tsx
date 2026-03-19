@@ -24,7 +24,13 @@ const Footer = () => {
               Every piece tells a story. Handcrafted with love, each creation carries warmth and waits to become part of your memories.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all duration-300">
+              <a
+                href="https://www.instagram.com/varnika_atelier/"
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all duration-300"
+                aria-label="Instagram @varnika_atelier"
+              >
                 <Instagram className="w-5 h-5" />
               </a>
               <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all duration-300">
@@ -62,17 +68,28 @@ const Footer = () => {
           <div>
             <h3 className="font-display text-lg mb-6 text-gold">Contact</h3>
             <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <Instagram className="w-5 h-5 text-gold shrink-0 mt-0.5" />
-                <span className="text-primary-foreground/70 text-sm font-body">Varnika Atelier<br />Guntur, Andhra Pradesh</span>
+              <li className="flex items-center gap-3">
+                <Instagram className="w-5 h-5 text-gold shrink-0" />
+                <a
+                  href="https://www.instagram.com/varnika_atelier/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary-foreground/70 hover:text-primary-foreground text-sm font-body transition-colors"
+                >
+                  @varnika_atelier
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-gold shrink-0" />
-                <span className="text-primary-foreground/70 text-sm font-body">+91 6305193711</span>
+                <a href="tel:6305193711" className="text-primary-foreground/70 hover:text-primary-foreground text-sm font-body transition-colors">
+                  6305193711
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-gold shrink-0" />
-                <span className="text-primary-foreground/70 text-sm font-body">varnika.atelier@gmail.com</span>
+                <a href="mailto:varnika.atelier@gmail.com" className="text-primary-foreground/70 hover:text-primary-foreground text-sm font-body transition-colors">
+                  varnika.atelier@gmail.com
+                </a>
               </li>
             </ul>
           </div>

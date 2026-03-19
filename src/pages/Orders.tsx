@@ -21,6 +21,7 @@ interface Order {
 
 interface OrderItem {
   id: string;
+  is_custom: boolean;
   product_id: string;
   product_name: string;
   product_image: string | null;
@@ -32,6 +33,7 @@ const Orders = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
+  const [orderCustomFlags, setOrderCustomFlags] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
@@ -43,7 +45,30 @@ const Orders = () => {
   const loadOrders = async () => {
     setLoading(true);
     const { data } = await supabase.from('orders').select('*').eq('user_id', user!.id).order('created_at', { ascending: false });
-    if (data) setOrders(data as Order[]);
+    if (data) {
+      const loadedOrders = data as Order[];
+      setOrders(loadedOrders);
+
+      const orderIds = loadedOrders.map((order) => order.id);
+      if (orderIds.length > 0) {
+        const { data: orderItemFlags } = await supabase
+          .from('order_items')
+          .select('order_id, is_custom')
+          .in('order_id', orderIds);
+
+        if (orderItemFlags) {
+          const nextFlags: Record<string, boolean> = {};
+          for (const row of orderItemFlags as { order_id: string; is_custom: boolean }[]) {
+            if (row.is_custom) {
+              nextFlags[row.order_id] = true;
+            } else if (!(row.order_id in nextFlags)) {
+              nextFlags[row.order_id] = false;
+            }
+          }
+          setOrderCustomFlags(nextFlags);
+        }
+      }
+    }
     setLoading(false);
   };
 
@@ -57,16 +82,6 @@ const Orders = () => {
       setOrderItems(prev => ({ ...prev, [orderId]: data as OrderItem[] }));
       setExpandedOrder(orderId);
     }
-  };
-
-  const statusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'bg-gold/20 text-foreground',
-      processing: 'bg-accent/20 text-accent-foreground',
-      completed: 'bg-sage/20 text-foreground',
-      cancelled: 'bg-destructive/20 text-destructive',
-    };
-    return <span className={`px-3 py-1 rounded-full text-xs font-body capitalize ${colors[status] || 'bg-muted text-muted-foreground'}`}>{status}</span>;
   };
 
   if (!user) {
@@ -115,10 +130,17 @@ const Orders = () => {
                         <p className="text-xs text-muted-foreground font-body mt-1">
                           {new Date(order.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
+                        {orderCustomFlags[order.id] ? (
+                          <div className="mt-2">
+                            <p className="text-sm font-body text-gold">Customization under review</p>
+                            <p className="text-xs font-body text-muted-foreground">We will contact you within a few hours</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm font-body text-sage mt-2">Order Confirmed</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-display text-lg text-foreground">₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
-                        {statusBadge(order.status)}
                       </div>
                     </div>
                   </CardHeader>

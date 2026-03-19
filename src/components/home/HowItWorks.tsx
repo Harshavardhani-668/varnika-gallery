@@ -6,7 +6,7 @@ const steps = [
   {
     icon: Palette,
     step: "01",
-    title: "Choose a Design",
+    title: "Choose Design",
     desc: "Browse our collection or tell us your idea.",
   },
   {
@@ -18,13 +18,13 @@ const steps = [
   {
     icon: Eye,
     step: "03",
-    title: "Artist Creates Preview",
+    title: "Artist Confirms",
     desc: "Our artist crafts a preview for your approval.",
   },
   {
     icon: Truck,
     step: "04",
-    title: "Delivered to Your Door",
+    title: "Delivered",
     desc: "Carefully packaged and shipped with love.",
   },
 ];

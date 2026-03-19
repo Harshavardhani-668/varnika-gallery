@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { useScrollReveal, useStaggeredReveal } from "@/hooks/useAnimations";
 import FloatingClouds from "@/components/effects/FloatingClouds";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 const Collections = () => {
   const { data: products, isLoading } = useProducts();
@@ -214,10 +215,14 @@ const Collections = () => {
                   >
                     {/* Image Container */}
                     <div className="relative aspect-[3/4] overflow-hidden">
-                      <img
+                      <OptimizedImage
                         src={art.imageUrl}
                         alt={art.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        containerClassName="w-full h-full"
+                        optimizeWidth={720}
+                        optimizeHeight={960}
+                        quality={72}
                         onError={(e) => {
                           e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=800&fit=crop";
                         }}

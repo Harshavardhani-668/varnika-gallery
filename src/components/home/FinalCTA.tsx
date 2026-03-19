@@ -1,18 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollReveal } from "@/hooks/useAnimations";
 import { cn } from "@/lib/utils";
 
 const FinalCTA = () => {
   const reveal = useScrollReveal<HTMLElement>();
-
-  const handleWhatsApp = () => {
-    const message = encodeURIComponent(
-      "Hi! I'd like to create a personalised gift. Can you help me?"
-    );
-    window.open(`https://wa.me/916305193711?text=${message}`, "_blank");
-  };
 
   return (
     <section
@@ -47,15 +40,6 @@ const FinalCTA = () => {
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Button
-              variant="gallery"
-              size="xl"
-              className="min-w-[220px] border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground hover:text-foreground"
-              onClick={handleWhatsApp}
-            >
-              <MessageCircle className="w-5 h-5" />
-              Chat on WhatsApp
-            </Button>
           </div>
 
           <p className="font-body text-primary-foreground/40 text-sm mt-8">

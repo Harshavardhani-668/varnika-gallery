@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export interface Order {
   id: string;
@@ -14,7 +15,9 @@ export interface Order {
 }
 
 export interface OrderItem {
+  customization_data: Json | null;
   id: string;
+  is_custom: boolean;
   order_id: string;
   product_id: string;
   product_name: string;
@@ -50,7 +53,15 @@ export const useOrders = () => {
   }, []);
 
   const createOrder = useCallback(async (
-    items: { product_id: string; product_name: string; product_image?: string; quantity: number; price: number }[],
+    items: {
+      product_id: string;
+      product_name: string;
+      product_image?: string;
+      quantity: number;
+      price: number;
+      is_custom?: boolean;
+      customization_data?: Json | null;
+    }[],
     shippingAddress: any
   ) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -88,6 +99,8 @@ export const useOrders = () => {
         product_image: item.product_image || null,
         quantity: item.quantity,
         price: item.price,
+        is_custom: item.is_custom === true,
+        customization_data: item.customization_data || null,
       }));
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);

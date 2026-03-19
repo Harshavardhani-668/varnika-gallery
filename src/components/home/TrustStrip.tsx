@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const trustItems = [
   { icon: Heart, label: "Handmade with Love", sub: "Every piece crafted by hand" },
-  { icon: Palette, label: "Customisable Designs", sub: "Make it truly yours" },
+  { icon: Palette, label: "Customisable", sub: "Make it truly yours" },
   { icon: Truck, label: "Safe Delivery", sub: "Careful packaging guaranteed" },
   { icon: Star, label: "5-Star Reviews", sub: "Loved by 2,000+ customers" },
 ];

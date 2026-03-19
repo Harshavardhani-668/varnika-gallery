@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
+import { ChevronLeft, ChevronRight, Quote, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useScrollReveal } from "@/hooks/useAnimations";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 interface Testimonial {
   id: string;
@@ -10,6 +11,7 @@ interface Testimonial {
   location: string;
   quote: string;
   image: string;
+  rating: number;
 }
 
 const testimonials: Testimonial[] = [
@@ -19,6 +21,7 @@ const testimonials: Testimonial[] = [
     location: "Delhi",
     quote: "The gift I received from Varnika was breathtaking. You could feel the love in every detail. It wasn't just a present — it was a memory I'll treasure forever.",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
+    rating: 5,
   },
   {
     id: "2",
@@ -26,6 +29,7 @@ const testimonials: Testimonial[] = [
     location: "Mumbai",
     quote: "I've never seen such attention to detail. Varnika turned my simple idea into something extraordinary. The personalization made all the difference.",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
+    rating: 5,
   },
   {
     id: "3",
@@ -33,25 +37,39 @@ const testimonials: Testimonial[] = [
     location: "Bangalore",
     quote: "The custom piece they created for our anniversary exceeded every expectation. Working with them was magical — we now have a gift that tells our love story.",
     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
+    rating: 5,
   },
 ];
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const sectionReveal = useScrollReveal<HTMLElement>();
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px)");
+    const update = () => setReduceMotion(media.matches);
+    update();
+
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [reduceMotion]);
 
   const next = () => setCurrentIndex((prev) => (prev + 1) % testimonials.length);
   const prev = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 
   return (
     <section
+      id="reviews"
       ref={sectionReveal.ref}
       className="py-24 bg-foreground text-primary-foreground overflow-hidden relative"
     >
@@ -90,16 +108,26 @@ const Testimonials = () => {
                 )}
               >
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gold/40 mb-6">
-                  <img
+                  <OptimizedImage
                     src={testimonial.image}
                     alt={testimonial.name}
                     className="w-full h-full object-cover"
+                    containerClassName="w-full h-full"
+                    optimizeWidth={200}
+                    optimizeHeight={200}
+                    quality={68}
                   />
                 </div>
 
                 <blockquote className="font-display text-xl md:text-2xl leading-relaxed text-primary-foreground/90 italic mb-8 max-w-2xl">
                   "{testimonial.quote}"
                 </blockquote>
+
+                <div className="flex items-center gap-1 mb-4" aria-label={`${testimonial.rating} star review`}>
+                  {Array.from({ length: testimonial.rating }).map((_, starIndex) => (
+                    <Star key={starIndex} className="w-4 h-4 fill-gold text-gold" />
+                  ))}
+                </div>
 
                 <div>
                   <p className="font-display text-lg text-gold">
