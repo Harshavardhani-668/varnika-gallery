@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: true,
     port: 8080,
-    strictPort: true,
-    allowedHosts: ["tubesnout-jessika-asynchronously.ngrok-free.dev"],
+    strictPort: false,
+    allowedHosts: true,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
