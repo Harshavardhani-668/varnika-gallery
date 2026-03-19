@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart, CartItem } from '@/hooks/useCart';
-import { useOrders } from '@/hooks/useOrders';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -13,11 +12,9 @@ import { Minus, Plus, ShoppingCart, Trash2, Loader2 } from 'lucide-react';
 const Cart = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { getCart, updateCartItem, removeFromCart, clearCart } = useCart();
-  const { createOrder } = useOrders();
+  const { getCart, updateCartItem, removeFromCart } = useCart();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processingOrder, setProcessingOrder] = useState(false);
 
   useEffect(() => {
     loadCart();
@@ -44,38 +41,13 @@ const Cart = () => {
     return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cartItems.length === 0) return;
-
-    // Require auth for checkout
     if (!user) {
-      navigate('/login?redirect=/cart');
+      navigate('/login?redirect=/checkout');
       return;
     }
-
-    setProcessingOrder(true);
-    
-    const orderItems = cartItems.map(item => ({
-      product_id: item.product_id,
-      product_name: item.product_name,
-      product_image: item.product_image || undefined,
-      quantity: item.quantity,
-      price: item.price,
-    }));
-
-    const shippingAddress = {
-      name: user?.user_metadata?.full_name || user?.email,
-      email: user?.email,
-    };
-
-    const { error, order } = await createOrder(orderItems, shippingAddress);
-
-    if (!error && order) {
-      await clearCart();
-      navigate('/orders');
-    }
-    
-    setProcessingOrder(false);
+    navigate('/checkout');
   };
 
   if (loading) {
@@ -217,12 +189,10 @@ const Cart = () => {
                   <CardFooter>
                     <Button
                       onClick={handleCheckout}
-                      disabled={processingOrder}
                       variant="artisan"
                       size="xl"
                       className="w-full button-glow"
                     >
-                      {processingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       {!user ? "Sign In to Checkout" : "Proceed to Checkout"}
                     </Button>
                   </CardFooter>

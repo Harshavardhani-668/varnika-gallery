@@ -44,17 +44,19 @@ Deno.serve(async (req) => {
     }
 
     if (action === "dashboard_stats") {
-      const [usersRes, ordersRes, revenueRes, recentRes] = await Promise.all([
+      const [usersRes, ordersRes, revenueRes, recentRes, productsRes] = await Promise.all([
         supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
         supabaseAdmin.from("orders").select("id", { count: "exact", head: true }),
         supabaseAdmin.from("orders").select("total_amount").eq("payment_status", "paid"),
         supabaseAdmin.from("orders").select("*, order_items(*)").order("created_at", { ascending: false }).limit(10),
+        supabaseAdmin.from("products").select("id", { count: "exact", head: true }),
       ]);
       const revenue = (revenueRes.data || []).reduce((sum: number, o: any) => sum + Number(o.total_amount), 0);
       return json({
         totalUsers: usersRes.count || 0,
         totalOrders: ordersRes.count || 0,
         totalRevenue: revenue,
+        totalProducts: productsRes.count || 0,
         recentOrders: recentRes.data || [],
       });
     }
@@ -109,6 +111,73 @@ Deno.serve(async (req) => {
         .from("orders").select("*, order_items(*)").eq("id", orderId).maybeSingle();
       if (!data) return json({ error: "Order not found" }, 404);
       return json({ order: data });
+    }
+
+    // ---- Product Management ----
+
+    if (action === "all_products") {
+      const { data } = await supabaseAdmin
+        .from("products").select("*").order("created_at", { ascending: false });
+      return json({ products: data || [] });
+    }
+
+    if (action === "create_product") {
+      const { product } = body;
+      const { error } = await supabaseAdmin.from("products").insert({
+        product_id: product.product_id,
+        product_name: product.product_name,
+        short_description: product.short_description || '',
+        long_description: product.long_description || '',
+        brand: product.brand || 'Varnika',
+        category: product.category || '',
+        subcategory: product.subcategory || '',
+        tags: product.tags || '',
+        color_variant: product.color_variant || '',
+        regular_price: product.regular_price || 0,
+        sale_price: product.sale_price,
+        cost_price: product.cost_price || 0,
+        image_url_1: product.image_url_1 || '',
+        image_url_2: product.image_url_2 || null,
+        image_url_3: product.image_url_3 || null,
+        stock: product.stock || 0,
+        customizable: product.customizable || false,
+        featured: product.featured || false,
+      });
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
+    }
+
+    if (action === "update_product") {
+      const { productId, product } = body;
+      const { error } = await supabaseAdmin.from("products").update({
+        product_name: product.product_name,
+        short_description: product.short_description,
+        long_description: product.long_description,
+        brand: product.brand,
+        category: product.category,
+        subcategory: product.subcategory,
+        tags: product.tags,
+        color_variant: product.color_variant,
+        regular_price: product.regular_price,
+        sale_price: product.sale_price,
+        cost_price: product.cost_price,
+        image_url_1: product.image_url_1,
+        image_url_2: product.image_url_2 || null,
+        image_url_3: product.image_url_3 || null,
+        stock: product.stock,
+        customizable: product.customizable,
+        featured: product.featured,
+        updated_at: new Date().toISOString(),
+      }).eq("id", productId);
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
+    }
+
+    if (action === "delete_product") {
+      const { productId } = body;
+      const { error } = await supabaseAdmin.from("products").delete().eq("id", productId);
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
     }
 
     return json({ error: "Unknown action" }, 400);

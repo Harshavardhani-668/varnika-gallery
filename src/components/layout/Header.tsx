@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, Heart, Search, ShoppingBag, User, LogOut, Package, Home, Store, Mail } from "lucide-react";
+import { Menu, X, Heart, Search, ShoppingBag, User, LogOut, Package, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,7 +87,7 @@ const Header = () => {
           "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-boutique",
           isScrolled
             ? "bg-background/95 backdrop-blur-md shadow-soft py-3"
-            : "bg-transparent py-6"
+            : "bg-transparent py-5"
         )}
       >
         <div className="varnika-container">
@@ -96,12 +96,12 @@ const Header = () => {
               <h1 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
                 Varnika
               </h1>
-              <span className="hidden md:block text-xs tracking-widest text-muted-foreground uppercase mt-0.5 font-body">
+              <span className="hidden md:block text-[10px] tracking-[0.2em] text-muted-foreground uppercase mt-0.5 font-body">
                 Handcrafted with Heart
               </span>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-7">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
@@ -112,9 +112,16 @@ const Header = () => {
                   <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold group-hover:w-full transition-all duration-300" />
                 </Link>
               ))}
+              {/* Highlighted Custom Gifts CTA */}
+              <Link to="/collections">
+                <Button size="sm" variant="reserve" className="rounded-full px-5 h-9 text-xs gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Custom Gifts
+                </Button>
+              </Link>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {/* Search */}
               <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => setIsSearchOpen(true)}>
                 <Search className="w-5 h-5 text-muted-foreground" />
@@ -220,7 +227,15 @@ const Header = () => {
                   {link.name}
                 </Link>
               ))}
-              <div className="flex items-center gap-6 mt-8">
+              {/* Highlighted Custom Gifts on mobile */}
+              <Link to="/collections" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="reserve" size="lg" className="gap-2 mt-2">
+                  <Sparkles className="w-5 h-5" />
+                  Custom Gifts
+                </Button>
+              </Link>
+
+              <div className="flex items-center gap-6 mt-6">
                 <Button variant="ghost" size="icon" onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}>
                   <Search className="w-6 h-6" />
                 </Button>

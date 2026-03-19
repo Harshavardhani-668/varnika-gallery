@@ -31,5 +31,5 @@ export function useAdmin() {
   const getAllUsers = useCallback(() => adminFetch('all_users'), [adminFetch]);
   const promoteToAdmin = useCallback((userId: string) => adminFetch('promote_to_admin', { userId }), [adminFetch]);
 
-  return { loading, checkAdmin, getDashboardStats, getAllOrders, getOrderDetail, updateOrder, getAllUsers, promoteToAdmin };
+  return { loading, adminFetch, checkAdmin, getDashboardStats, getAllOrders, getOrderDetail, updateOrder, getAllUsers, promoteToAdmin };
 }
