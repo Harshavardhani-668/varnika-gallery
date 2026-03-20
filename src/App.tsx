@@ -92,7 +92,7 @@ const App = () => (
           <WelcomeModal />
           <Suspense fallback={<AppLoader />}>
             <Routes>
-              <Route path="/" element={<div>HELLO UPDATE</div>} />
+              <Route path="/" element={<Index />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/customize/:id" element={<CustomizeProduct />} />
               <Route path="/collections" element={<Collections />} />
