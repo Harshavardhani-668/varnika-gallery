@@ -123,7 +123,7 @@ const Orders = () => {
 
   const canCancelOrder = (status: string) => {
     const normalized = (status || '').toLowerCase();
-    return normalized === 'pending' || normalized === 'processing';
+    return normalized === 'pending' || normalized === 'processing' || normalized === 'confirmed';
   };
 
   const handleCancelOrder = async (order: Order) => {
@@ -153,7 +153,7 @@ const Orders = () => {
         })
         .eq('id', order.id)
         .eq('user_id', user!.id)
-        .in('status', ['pending', 'processing']);
+        .in('status', ['pending', 'processing', 'confirmed']);
 
       if (error) throw error;
 
@@ -247,6 +247,11 @@ const Orders = () => {
                           <p className="text-sm font-body text-sage mt-2">{getStatusLabel(order.status)}</p>
                         )}
                         <p className="text-xs font-body text-muted-foreground mt-1">{getTrackingMessage(order.status)}</p>
+                        {canCancelOrder(order.status) && (
+                          <p className="text-xs font-body text-destructive mt-1">
+                            Cancellation available. Open this order to select reason and cancel.
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-display text-lg text-foreground">₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
