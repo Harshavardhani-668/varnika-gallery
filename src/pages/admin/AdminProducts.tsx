@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Loader2, ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const emptyProduct = {
   product_id: '',
@@ -41,6 +42,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyProduct });
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -138,6 +140,22 @@ const AdminProducts = () => {
     }
   };
 
+  const handleImportProducts = async () => {
+    setImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('import-products');
+      if (error) throw error;
+
+      const imported = Number(data?.imported || 0);
+      toast({ title: 'Import completed', description: `${imported} products synced from sheet to Supabase.` });
+      await fetchProducts();
+    } catch (err: any) {
+      toast({ title: 'Import failed', description: err.message || 'Unable to import products.', variant: 'destructive' });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (loading && products.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -154,9 +172,15 @@ const AdminProducts = () => {
             <Button variant="ghost" size="icon" asChild><Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
             <h1 className="font-display text-3xl font-bold text-foreground">Products ({products.length})</h1>
           </div>
-          <Button onClick={openCreate} variant="artisan">
-            <Plus className="w-4 h-4 mr-2" /> Add Product
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleImportProducts} variant="outline" disabled={importing}>
+              {importing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Sync Products
+            </Button>
+            <Button onClick={openCreate} variant="artisan">
+              <Plus className="w-4 h-4 mr-2" /> Add Product
+            </Button>
+          </div>
         </div>
 
         <Card>
