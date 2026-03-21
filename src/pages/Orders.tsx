@@ -160,7 +160,7 @@ const Orders = () => {
         })
         .eq('id', order.id)
         .eq('user_id', user!.id)
-        .in('status', ['pending', 'processing', 'confirmed'])
+        .or('status.ilike.pending,status.ilike.processing,status.ilike.confirmed')
         .select('id, status')
         .maybeSingle();
 
