@@ -15,10 +15,58 @@ function json(data: unknown, status = 200) {
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "onboarding@resend.dev";
 const REPLY_TO_EMAIL = Deno.env.get("RESEND_REPLY_TO") || "varnika.atelier@gmail.com";
+const ADMIN_ALERT_EMAIL = Deno.env.get("ADMIN_ALERT_EMAIL") || "varnika.atelier@gmail.com";
 
 interface EmailTemplate {
   subject: string;
   html: string;
+}
+
+function getAdminOrderAlertEmail(
+  type: "new_order" | "cancelled_order",
+  payload: {
+    orderNumber: string;
+    customerName: string;
+    customerEmail: string;
+    total?: number;
+    items?: any[];
+    cancellationReason?: string;
+  }
+): EmailTemplate {
+  const itemsCount = payload.items?.reduce((sum, item) => sum + Number(item.quantity || 0), 0) || 0;
+
+  if (type === "new_order") {
+    return {
+      subject: `Admin Alert: New Order ${payload.orderNumber}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+          <h2 style="margin-bottom: 8px;">New order received</h2>
+          <p><strong>Order:</strong> ${payload.orderNumber}</p>
+          <p><strong>Customer:</strong> ${payload.customerName}</p>
+          <p><strong>Email:</strong> ${payload.customerEmail}</p>
+          <p><strong>Items:</strong> ${itemsCount}</p>
+          <p><strong>Total:</strong> ₹${Number(payload.total || 0).toFixed(2)}</p>
+          <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+          <p style="margin-top: 12px; color: #555;">Open Admin Dashboard to review and process this order.</p>
+        </div>
+      `,
+    };
+  }
+
+  return {
+    subject: `Admin Alert: Order Cancelled ${payload.orderNumber}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+        <h2 style="margin-bottom: 8px; color: #b91c1c;">Order cancelled by customer</h2>
+        <p><strong>Order:</strong> ${payload.orderNumber}</p>
+        <p><strong>Customer:</strong> ${payload.customerName}</p>
+        <p><strong>Email:</strong> ${payload.customerEmail}</p>
+        <p><strong>Reason:</strong> ${payload.cancellationReason || "Not provided"}</p>
+        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+        <p style="margin-top: 12px; color: #555;">Open Admin Dashboard to review this cancelled order.</p>
+      </div>
+    `,
+  };
 }
 
 function getOrderConfirmationEmail(orderNumber: string, customerName: string, items: any[], total: number): EmailTemplate {
@@ -254,12 +302,35 @@ Deno.serve(async (req) => {
     if (action === "order_confirmation") {
       const template = getOrderConfirmationEmail(orderNumber, customerName, items, total);
       const success = await sendEmail(customerEmail, template.subject, template.html);
+
+      // Also notify admin on every new order.
+      const adminTemplate = getAdminOrderAlertEmail("new_order", {
+        orderNumber,
+        customerName,
+        customerEmail,
+        total,
+        items,
+      });
+      await sendEmail(ADMIN_ALERT_EMAIL, adminTemplate.subject, adminTemplate.html);
+
       return json({ success, message: success ? "Email sent" : "Failed to send email" });
     }
 
     if (action === "order_status_update") {
       const template = getOrderStatusEmail(orderNumber, customerName, status, cancellationReason);
       const success = await sendEmail(customerEmail, template.subject, template.html);
+
+      // Notify admin when customer cancellation happens.
+      if ((status || "").toLowerCase() === "cancelled") {
+        const adminTemplate = getAdminOrderAlertEmail("cancelled_order", {
+          orderNumber,
+          customerName,
+          customerEmail,
+          cancellationReason,
+        });
+        await sendEmail(ADMIN_ALERT_EMAIL, adminTemplate.subject, adminTemplate.html);
+      }
+
       return json({ success, message: success ? "Status email sent" : "Failed to send email" });
     }
 
