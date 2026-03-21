@@ -78,6 +78,7 @@ const ProductDetail = () => {
       .from('reviews')
       .select('id, user_id, rating, review_text, review_image_url, created_at')
       .eq('product_id', product.id)
+      .eq('is_visible', true)
       .order('created_at', { ascending: false });
 
     const rawReviews = (reviewRows || []) as Omit<ProductReview, 'reviewer_name'>[];

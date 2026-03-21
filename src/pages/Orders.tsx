@@ -9,6 +9,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package } from 'lucide-react';
 
+const ORDER_STEPS = ['pending', 'processing', 'shipped', 'delivered'];
+
+const getStatusLabel = (status: string) => {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'pending') return 'Order Placed';
+  if (normalized === 'processing') return 'Preparing';
+  if (normalized === 'shipped') return 'Shipped';
+  if (normalized === 'delivered') return 'Delivered';
+  if (normalized === 'cancelled') return 'Cancelled';
+  return status || 'Pending';
+};
+
+const getTrackingMessage = (status: string) => {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'pending') return 'Thanks for your order. We are confirming it now.';
+  if (normalized === 'processing') return 'Your order is being carefully prepared.';
+  if (normalized === 'shipped') return 'Your order is on the way.';
+  if (normalized === 'delivered') return 'Delivered successfully. Thank you for shopping with us!';
+  if (normalized === 'cancelled') return 'This order was cancelled. Contact support if needed.';
+  return 'Tracking updates will appear here.';
+};
+
 interface Order {
   id: string;
   order_number: string;
@@ -136,8 +158,9 @@ const Orders = () => {
                             <p className="text-xs font-body text-muted-foreground">We will contact you within a few hours</p>
                           </div>
                         ) : (
-                          <p className="text-sm font-body text-sage mt-2">Order Confirmed</p>
+                          <p className="text-sm font-body text-sage mt-2">{getStatusLabel(order.status)}</p>
                         )}
+                        <p className="text-xs font-body text-muted-foreground mt-1">{getTrackingMessage(order.status)}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-display text-lg text-foreground">₹{Number(order.total_amount).toLocaleString('en-IN')}</span>
@@ -146,6 +169,25 @@ const Orders = () => {
                   </CardHeader>
                   {expandedOrder === order.id && orderItems[order.id] && (
                     <CardContent className="border-t border-border pt-4">
+                      {order.status.toLowerCase() !== 'cancelled' && (
+                        <div className="mb-4">
+                          <p className="text-xs font-body text-muted-foreground mb-2">Order tracking</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {ORDER_STEPS.map((step, index) => {
+                              const currentIndex = ORDER_STEPS.indexOf((order.status || '').toLowerCase());
+                              const active = currentIndex >= index;
+                              return (
+                                <div
+                                  key={step}
+                                  className={`rounded-lg border px-2 py-2 text-center text-xs font-body ${active ? 'border-gold bg-gold/10 text-foreground' : 'border-border text-muted-foreground'}`}
+                                >
+                                  {getStatusLabel(step)}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                       <div className="space-y-3">
                         {orderItems[order.id].map(item => (
                           <div key={item.id} className="flex items-center gap-3">

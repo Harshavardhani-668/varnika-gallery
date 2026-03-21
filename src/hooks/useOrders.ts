@@ -107,8 +107,8 @@ export const useOrders = () => {
       if (itemsError) throw itemsError;
 
       toast({
-        title: 'Order placed!',
-        description: `Your order ${orderNumber} has been placed successfully.`,
+        title: 'Thank you for your order!',
+        description: `Order ${orderNumber} is confirmed. You can track live progress in My Orders.`,
       });
 
       return { error: null, order };

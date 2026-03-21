@@ -180,6 +180,57 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    // ---- Review Moderation ----
+
+    if (action === "all_reviews") {
+      const { data, error } = await supabaseAdmin
+        .from("reviews")
+        .select("id, user_id, order_id, product_id, rating, review_text, review_image_url, created_at, updated_at, is_visible")
+        .order("created_at", { ascending: false });
+
+      if (error) return json({ error: error.message }, 400);
+
+      const userIds = [...new Set((data || []).map((r: any) => r.user_id))];
+      let profileMap: Record<string, string> = {};
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+
+        profileMap = (profiles || []).reduce((acc: Record<string, string>, p: any) => {
+          acc[p.id] = p.full_name || p.email || "Anonymous";
+          return acc;
+        }, {});
+      }
+
+      const reviews = (data || []).map((r: any) => ({
+        ...r,
+        reviewer_name: profileMap[r.user_id] || "Anonymous",
+      }));
+
+      return json({ reviews });
+    }
+
+    if (action === "update_review_visibility") {
+      const { reviewId, isVisible } = body;
+      const { error } = await supabaseAdmin
+        .from("reviews")
+        .update({ is_visible: Boolean(isVisible), updated_at: new Date().toISOString() })
+        .eq("id", reviewId);
+
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
+    }
+
+    if (action === "delete_review") {
+      const { reviewId } = body;
+      const { error } = await supabaseAdmin.from("reviews").delete().eq("id", reviewId);
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (err) {
     return json({ error: String(err) }, 500);

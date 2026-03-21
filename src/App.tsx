@@ -32,6 +32,7 @@ const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminOrderDetail = lazy(() => import("./pages/admin/AdminOrderDetail"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const Chatbot = lazy(() => import("./components/Chatbot"));
 
 const AppLoader = () => <div className="min-h-screen bg-background" />;
@@ -113,6 +114,7 @@ const App = () => (
               <Route path="/admin/orders/:id" element={<AdminRoute><AdminOrderDetail /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
               <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+              <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

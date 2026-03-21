@@ -62,7 +62,7 @@ export const useWishlist = () => {
           .eq('user_id', user.id)
           .eq('product_id', productId);
         if (error) throw error;
-        toast({ title: 'Removed from wishlist', description: `${productName} removed.` });
+        toast({ title: 'Removed from wishlist', description: `${productName} removed. You can save it again anytime.` });
       } else {
         const { error } = await supabase
           .from('wishlists')
@@ -74,7 +74,7 @@ export const useWishlist = () => {
             price,
           });
         if (error) throw error;
-        toast({ title: 'Added to wishlist!', description: `${productName} saved to your wishlist.` });
+        toast({ title: 'Saved to wishlist', description: `${productName} is waiting for you. Great choice!` });
       }
       await loadWishlist();
     } catch (error: any) {
