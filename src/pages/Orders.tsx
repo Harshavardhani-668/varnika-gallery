@@ -142,7 +142,15 @@ const Orders = () => {
 
     setCancellingOrderId(order.id);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Please sign in again and retry cancellation.');
+      }
+
       const { data: result, error: fnError } = await supabase.functions.invoke('user-orders', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: {
           action: 'cancel_order',
           orderId: order.id,

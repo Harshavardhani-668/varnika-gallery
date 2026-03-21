@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
       if (order.user_id !== user.id) return json({ error: "Forbidden" }, 403);
 
       const normalized = String(order.status || "").toLowerCase().trim();
-      if (!["pending", "processing", "confirmed"].includes(normalized)) {
-        return json({ error: "This order can no longer be cancelled." }, 400);
+      if (normalized === "cancelled") {
+        return json({ error: "Order is already cancelled." }, 400);
       }
 
       const safeShippingAddress =
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         .select("id, status, shipping_address")
         .maybeSingle();
 
-      if (updateError) return json({ error: updateError.message }, 400);
+      if (updateError) return json({ error: `Cancel failed: ${updateError.message}` }, 400);
       if (!updatedOrder) return json({ error: "Failed to cancel order" }, 400);
 
       const { data: profile } = await supabaseAdmin
