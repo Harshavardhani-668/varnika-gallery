@@ -142,66 +142,38 @@ const Orders = () => {
 
     setCancellingOrderId(order.id);
     try {
-      const safeShippingAddress =
-        order.shipping_address && typeof order.shipping_address === 'object' ? order.shipping_address : {};
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-orders`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'cancel_order',
+          orderId: order.id,
+          reason,
+        }),
+      });
 
-      const nextShippingAddress = {
-        ...safeShippingAddress,
-        cancellation_reason: reason,
-        cancelled_at: new Date().toISOString(),
-      };
-
-      const { data: updatedOrder, error } = await supabase
-        .from('orders')
-        .update({
-          status: 'cancelled',
-          shipping_address: nextShippingAddress,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', order.id)
-        .eq('user_id', user!.id)
-        .or('status.ilike.pending,status.ilike.processing,status.ilike.confirmed')
-        .select('id, status')
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!updatedOrder) {
-        throw new Error('This order can no longer be cancelled. Only pending, confirmed, or processing orders are cancelable.');
+      const result = await response.json();
+      if (!response.ok || result?.error) {
+        throw new Error(result?.error || 'Unable to cancel order');
       }
+
+      const cancelledShippingAddress = result?.order?.shipping_address || {
+        ...(order.shipping_address || {}),
+        cancellation_reason: reason,
+      };
 
       // Update local state immediately so cancel UI does not reappear due stale refresh.
       setOrders((prev) =>
         prev.map((o) =>
           o.id === order.id
-            ? { ...o, status: 'cancelled', shipping_address: nextShippingAddress }
+            ? { ...o, status: 'cancelled', shipping_address: cancelledShippingAddress }
             : o
         )
       );
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email, full_name')
-        .eq('id', user!.id)
-        .single();
-
-      if (profile?.email) {
-        const { data: { session } } = await supabase.auth.getSession();
-        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-order-email`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'order_status_update',
-            orderNumber: order.order_number,
-            customerEmail: profile.email,
-            customerName: profile.full_name || 'Valued Customer',
-            status: 'cancelled',
-            cancellationReason: reason,
-          }),
-        });
-      }
 
       toast({ title: 'Order cancelled', description: `Reason saved: ${reason}` });
       await loadOrders();
