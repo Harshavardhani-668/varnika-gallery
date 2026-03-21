@@ -122,7 +122,7 @@ const Orders = () => {
   };
 
   const canCancelOrder = (status: string) => {
-    const normalized = (status || '').toLowerCase();
+    const normalized = (status || '').toLowerCase().trim();
     return normalized === 'pending' || normalized === 'processing' || normalized === 'confirmed';
   };
 
@@ -134,6 +134,10 @@ const Orders = () => {
     }
 
     const note = (cancelNoteByOrder[order.id] || '').trim();
+    if (baseReason === 'Other' && !note) {
+      toast({ title: 'Add reason details', description: 'Please type your reason in the text box.', variant: 'destructive' });
+      return;
+    }
     const reason = baseReason === 'Other' && note ? note : baseReason;
 
     setCancellingOrderId(order.id);
@@ -164,6 +168,15 @@ const Orders = () => {
       if (!updatedOrder) {
         throw new Error('This order can no longer be cancelled. Only pending, confirmed, or processing orders are cancelable.');
       }
+
+      // Update local state immediately so cancel UI does not reappear due stale refresh.
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? { ...o, status: 'cancelled', shipping_address: nextShippingAddress }
+            : o
+        )
+      );
 
       const { data: profile } = await supabase
         .from('profiles')
