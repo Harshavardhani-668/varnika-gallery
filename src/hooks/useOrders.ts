@@ -106,6 +106,37 @@ export const useOrders = () => {
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw itemsError;
 
+      // Get user profile for email
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', user.id)
+        .single();
+
+      // Send confirmation email
+      if (profile?.email) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-order-email`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'order_confirmation',
+              orderNumber,
+              customerEmail: profile.email,
+              customerName: profile.full_name || 'Valued Customer',
+              items,
+              total: totalAmount,
+            }),
+          });
+        } catch (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+        }
+      }
+
       toast({
         title: 'Thank you for your order!',
         description: `Order ${orderNumber} is confirmed. You can track live progress in My Orders.`,

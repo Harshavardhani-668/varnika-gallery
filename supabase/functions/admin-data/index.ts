@@ -69,15 +69,48 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update_order") {
-      const { orderId, status, payment_status } = body;
+      const { orderId, status, payment_status, sendEmail: shouldSendEmail } = body;
       const updates: Record<string, string> = {};
       if (status) updates.status = status;
       if (payment_status) updates.payment_status = payment_status;
       updates.updated_at = new Date().toISOString();
 
+      // Get order details for email
+      const { data: order } = await supabaseAdmin
+        .from("orders").select("*, order_items(*)").eq("id", orderId).maybeSingle();
+
       const { error } = await supabaseAdmin
         .from("orders").update(updates).eq("id", orderId);
       if (error) return json({ error: error.message }, 400);
+
+      // Send status update email if requested and status changed
+      if (shouldSendEmail && status && order) {
+        try {
+          const { data: profile } = await supabaseAdmin
+            .from("profiles").select("email, full_name").eq("id", order.user_id).maybeSingle();
+          
+          if (profile?.email) {
+            const emailRes = await fetch(new URL("/functions/v1/send-order-email", supabaseUrl), {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${serviceRoleKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "order_status_update",
+                orderNumber: order.order_number,
+                customerEmail: profile.email,
+                customerName: profile.full_name || "Valued Customer",
+                status: status,
+              }),
+            });
+            if (!emailRes.ok) console.error("Failed to send status email:", await emailRes.text());
+          }
+        } catch (emailError) {
+          console.error("Error sending status update email:", emailError);
+        }
+      }
+
       return json({ success: true });
     }
 
