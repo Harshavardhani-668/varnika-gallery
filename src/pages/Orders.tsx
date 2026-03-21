@@ -142,23 +142,19 @@ const Orders = () => {
 
     setCancellingOrderId(order.id);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-orders`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data: result, error: fnError } = await supabase.functions.invoke('user-orders', {
+        body: {
           action: 'cancel_order',
           orderId: order.id,
           reason,
-        }),
+        },
       });
 
-      const result = await response.json();
-      if (!response.ok || result?.error) {
-        throw new Error(result?.error || 'Unable to cancel order');
+      if (fnError) {
+        throw new Error(fnError.message || 'Unable to cancel order');
+      }
+      if (result?.error) {
+        throw new Error(result.error);
       }
 
       const cancelledShippingAddress = result?.order?.shipping_address || {
