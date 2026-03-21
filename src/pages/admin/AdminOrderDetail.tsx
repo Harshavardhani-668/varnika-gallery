@@ -73,6 +73,12 @@ const AdminOrderDetail = () => {
                 {address.address_line2 && <p className="text-muted-foreground">{address.address_line2}</p>}
                 <p className="text-muted-foreground">{address.city}, {address.state} {address.postal_code}</p>
                 {address.phone && <p className="text-muted-foreground">Phone: {address.phone}</p>}
+                {address.cancellation_reason && (
+                  <div className="mt-3 rounded-md border border-border bg-muted/20 p-2">
+                    <p className="text-xs text-muted-foreground">Cancellation reason</p>
+                    <p className="text-sm text-foreground">{address.cancellation_reason}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

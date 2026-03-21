@@ -7,9 +7,20 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { Package } from 'lucide-react';
 
 const ORDER_STEPS = ['pending', 'processing', 'shipped', 'delivered'];
+const CANCELLATION_REASONS = [
+  'Placed by mistake',
+  'Need to change address',
+  'Delivery is taking too long',
+  'Found a better option',
+  'Price issue',
+  'Other',
+];
 
 const getStatusLabel = (status: string) => {
   const normalized = (status || '').toLowerCase();
@@ -53,11 +64,15 @@ interface OrderItem {
 
 const Orders = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [orderCustomFlags, setOrderCustomFlags] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [cancelReasonByOrder, setCancelReasonByOrder] = useState<Record<string, string>>({});
+  const [cancelNoteByOrder, setCancelNoteByOrder] = useState<Record<string, string>>({});
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) loadOrders();
@@ -103,6 +118,77 @@ const Orders = () => {
     if (data) {
       setOrderItems(prev => ({ ...prev, [orderId]: data as OrderItem[] }));
       setExpandedOrder(orderId);
+    }
+  };
+
+  const canCancelOrder = (status: string) => {
+    const normalized = (status || '').toLowerCase();
+    return normalized === 'pending' || normalized === 'processing';
+  };
+
+  const handleCancelOrder = async (order: Order) => {
+    const baseReason = cancelReasonByOrder[order.id];
+    if (!baseReason) {
+      toast({ title: 'Select a reason', description: 'Please choose a cancellation reason.', variant: 'destructive' });
+      return;
+    }
+
+    const note = (cancelNoteByOrder[order.id] || '').trim();
+    const reason = baseReason === 'Other' && note ? note : baseReason;
+
+    setCancellingOrderId(order.id);
+    try {
+      const nextShippingAddress = {
+        ...(order.shipping_address || {}),
+        cancellation_reason: reason,
+        cancelled_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          shipping_address: nextShippingAddress,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id)
+        .eq('user_id', user!.id)
+        .in('status', ['pending', 'processing']);
+
+      if (error) throw error;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', user!.id)
+        .single();
+
+      if (profile?.email) {
+        const { data: { session } } = await supabase.auth.getSession();
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-order-email`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'order_status_update',
+            orderNumber: order.order_number,
+            customerEmail: profile.email,
+            customerName: profile.full_name || 'Valued Customer',
+            status: 'cancelled',
+            cancellationReason: reason,
+          }),
+        });
+      }
+
+      toast({ title: 'Order cancelled', description: 'Your order was cancelled successfully.' });
+      await loadOrders();
+      setExpandedOrder(order.id);
+    } catch (err: any) {
+      toast({ title: 'Unable to cancel', description: err.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setCancellingOrderId(null);
     }
   };
 
@@ -201,6 +287,47 @@ const Orders = () => {
                           </div>
                         ))}
                       </div>
+                      {canCancelOrder(order.status) && (
+                        <div className="mt-5 border-t border-border pt-4 space-y-3">
+                          <p className="text-sm font-medium text-foreground">Need to cancel this order?</p>
+                          <Select
+                            value={cancelReasonByOrder[order.id] || ''}
+                            onValueChange={(value) => setCancelReasonByOrder((prev) => ({ ...prev, [order.id]: value }))}
+                            disabled={cancellingOrderId === order.id}
+                          >
+                            <SelectTrigger className="w-full sm:w-[320px]">
+                              <SelectValue placeholder="Select cancellation reason" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CANCELLATION_REASONS.map((reason) => (
+                                <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {cancelReasonByOrder[order.id] === 'Other' && (
+                            <Textarea
+                              placeholder="Please tell us your reason"
+                              value={cancelNoteByOrder[order.id] || ''}
+                              onChange={(e) => setCancelNoteByOrder((prev) => ({ ...prev, [order.id]: e.target.value }))}
+                              className="max-w-lg"
+                              disabled={cancellingOrderId === order.id}
+                            />
+                          )}
+                          <Button
+                            variant="outline"
+                            onClick={() => handleCancelOrder(order)}
+                            disabled={cancellingOrderId === order.id}
+                          >
+                            {cancellingOrderId === order.id ? 'Cancelling...' : 'Cancel Order'}
+                          </Button>
+                        </div>
+                      )}
+                      {(order.status || '').toLowerCase() === 'cancelled' && order.shipping_address?.cancellation_reason && (
+                        <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3">
+                          <p className="text-xs text-muted-foreground">Cancellation reason</p>
+                          <p className="text-sm text-foreground">{order.shipping_address.cancellation_reason}</p>
+                        </div>
+                      )}
                     </CardContent>
                   )}
                 </Card>

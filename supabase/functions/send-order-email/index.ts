@@ -112,7 +112,7 @@ function getOrderConfirmationEmail(orderNumber: string, customerName: string, it
   };
 }
 
-function getOrderStatusEmail(orderNumber: string, customerName: string, status: string): EmailTemplate {
+function getOrderStatusEmail(orderNumber: string, customerName: string, status: string, cancellationReason?: string): EmailTemplate {
   const statusMap: Record<string, { title: string; message: string; color: string }> = {
     processing: {
       title: "🎁 Your Order is Being Prepared",
@@ -133,6 +133,13 @@ function getOrderStatusEmail(orderNumber: string, customerName: string, status: 
       title: "⏳ Order Received",
       message: "Thank you for your order! We're getting everything ready for you.",
       color: "#FF9800",
+    },
+    cancelled: {
+      title: "Order Cancelled",
+      message: cancellationReason
+        ? `Your order was cancelled as requested. Reason: ${cancellationReason}`
+        : "Your order was cancelled as requested.",
+      color: "#EF4444",
     },
   };
 
@@ -242,7 +249,7 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
-    const { action, orderNumber, customerEmail, customerName, items, total, status } = body;
+    const { action, orderNumber, customerEmail, customerName, items, total, status, cancellationReason } = body;
 
     if (action === "order_confirmation") {
       const template = getOrderConfirmationEmail(orderNumber, customerName, items, total);
@@ -251,7 +258,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "order_status_update") {
-      const template = getOrderStatusEmail(orderNumber, customerName, status);
+      const template = getOrderStatusEmail(orderNumber, customerName, status, cancellationReason);
       const success = await sendEmail(customerEmail, template.subject, template.html);
       return json({ success, message: success ? "Status email sent" : "Failed to send email" });
     }
