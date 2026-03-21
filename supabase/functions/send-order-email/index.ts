@@ -13,7 +13,8 @@ function json(data: unknown, status = 200) {
 }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM_EMAIL = "varnika.atelier@gmail.com";
+const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "onboarding@resend.dev";
+const REPLY_TO_EMAIL = Deno.env.get("RESEND_REPLY_TO") || "varnika.atelier@gmail.com";
 
 interface EmailTemplate {
   subject: string;
@@ -213,6 +214,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
         to: to,
         subject: subject,
         html: html,
+        reply_to: REPLY_TO_EMAIL,
       }),
     });
 
