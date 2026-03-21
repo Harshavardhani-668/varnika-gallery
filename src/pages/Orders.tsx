@@ -138,13 +138,16 @@ const Orders = () => {
 
     setCancellingOrderId(order.id);
     try {
+      const safeShippingAddress =
+        order.shipping_address && typeof order.shipping_address === 'object' ? order.shipping_address : {};
+
       const nextShippingAddress = {
-        ...(order.shipping_address || {}),
+        ...safeShippingAddress,
         cancellation_reason: reason,
         cancelled_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { data: updatedOrder, error } = await supabase
         .from('orders')
         .update({
           status: 'cancelled',
@@ -153,9 +156,14 @@ const Orders = () => {
         })
         .eq('id', order.id)
         .eq('user_id', user!.id)
-        .in('status', ['pending', 'processing', 'confirmed']);
+        .in('status', ['pending', 'processing', 'confirmed'])
+        .select('id, status')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!updatedOrder) {
+        throw new Error('This order can no longer be cancelled. Only pending, confirmed, or processing orders are cancelable.');
+      }
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -182,7 +190,7 @@ const Orders = () => {
         });
       }
 
-      toast({ title: 'Order cancelled', description: 'Your order was cancelled successfully.' });
+      toast({ title: 'Order cancelled', description: `Reason saved: ${reason}` });
       await loadOrders();
       setExpandedOrder(order.id);
     } catch (err: any) {
