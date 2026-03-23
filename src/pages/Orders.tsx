@@ -140,56 +140,91 @@ const Orders = () => {
     const note = (cancelNoteByOrder[order.id] || '').trim();
     const reason = baseReason === 'Other' && note ? note : baseReason;
 
-    if (!reason || reason.trim().length === 0) {
-      toast({ title: 'Invalid reason', description: 'Please provide a valid cancellation reason.', variant: 'destructive' });
-      return;
-    }
-
     setCancellingOrderId(order.id);
     try {
-      const { data: cancelRes, error: cancelError } = await supabase.functions.invoke('order-actions', {
+      // Call order-actions Edge Function to cancel the order
+      const cancelRes = await supabase.functions.invoke('order-actions', {
         body: {
           action: 'cancel_order',
           orderId: order.id,
-          reason: reason.trim(),
+          reason,
         },
       });
 
-      if (cancelError) throw new Error(cancelError.message || 'Function error');
-      if (cancelRes?.error) throw new Error(cancelRes.error);
-      if (!cancelRes?.success) throw new Error('Cancellation failed - no success response');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email, full_name')
-        .eq('id', user!.id)
-        .single();
-
-      if (profile?.email) {
-        const { data: { session } } = await supabase.auth.getSession();
-        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-order-email`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'order_status_update',
-            orderNumber: order.order_number,
-            customerEmail: profile.email,
-            customerName: profile.full_name || 'Valued Customer',
-            status: 'cancelled',
-            cancellationReason: reason,
-          }),
-        });
+      // Check for function-level errors (network, auth, etc.)
+      if (cancelRes.error) {
+        console.error('Function error:', cancelRes.error);
+        throw new Error(cancelRes.error.message || 'Failed to cancel order');
       }
 
-      toast({ title: 'Order cancelled', description: 'Your order was cancelled successfully.' });
+      // Check for API response errors (validation, not found, etc.)
+      if (cancelRes.data?.error) {
+        console.error('API error:', cancelRes.data.error);
+        throw new Error(cancelRes.data.error);
+      }
+
+      // Verify success flag
+      if (!cancelRes.data?.success) {
+        console.error('Unexpected response:', cancelRes.data);
+        throw new Error('Order cancellation failed - unexpected response');
+      }
+
+      // Show success message
+      toast({
+        title: 'Order cancelled',
+        description: 'Your order was cancelled successfully. A confirmation email has been sent.',
+      });
+
+      // Refresh orders and show expanded view
       await loadOrders();
       setExpandedOrder(order.id);
+
+      // Clear cancellation form
+      setCancelReasonByOrder((prev) => ({ ...prev, [order.id]: '' }));
+      setCancelNoteByOrder((prev) => ({ ...prev, [order.id]: '' }));
+
+      // Attempt to send cancellation email notification
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', user!.id)
+          .single();
+
+        if (profile?.email) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-order-email`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                action: 'order_status_update',
+                orderNumber: order.order_number,
+                customerEmail: profile.email,
+                customerName: profile.full_name || 'Valued Customer',
+                status: 'cancelled',
+                cancellationReason: reason,
+              }),
+            }).catch((emailError) => {
+              // Log email error but don't block the flow - order is already cancelled
+              console.warn('Failed to send cancellation email:', emailError);
+            });
+          }
+        }
+      } catch (emailError: any) {
+        // Silent fail for email - order is already cancelled
+        console.warn('Email notification error:', emailError.message);
+      }
     } catch (err: any) {
-      console.error('Cancel error:', err);
-      toast({ title: 'Unable to cancel', description: err.message || 'Please try again.', variant: 'destructive' });
+      console.error('Cancel order error:', err);
+      toast({
+        title: 'Unable to cancel order',
+        description: err.message || 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setCancellingOrderId(null);
     }
