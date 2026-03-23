@@ -18,12 +18,18 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      return json({ error: "Missing environment variables" }, 500);
+    }
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "No auth header" }, 401);
+    if (!authHeader) {
+      return json({ error: "No authorization header" }, 401);
+    }
 
     const supabaseUser = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -34,18 +40,34 @@ Deno.serve(async (req) => {
       error: authError,
     } = await supabaseUser.auth.getUser();
 
-    if (authError || !user) return json({ error: "Unauthorized" }, 401);
+    if (authError || !user) {
+      return json({ error: "Unauthorized - invalid token" }, 401);
+    }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ error: "Invalid JSON in request body" }, 400);
+    }
+
     const { action } = body;
 
-    if (action !== "cancel_order") return json({ error: "Invalid action" }, 400);
+    if (action !== "cancel_order") {
+      return json({ error: `Invalid action: ${action}` }, 400);
+    }
 
     const { orderId, reason } = body;
-    if (!orderId) return json({ error: "orderId is required" }, 400);
-    if (!reason || String(reason).trim().length === 0) return json({ error: "reason is required" }, 400);
+    
+    if (!orderId) {
+      return json({ error: "Missing orderId" }, 400);
+    }
+
+    if (!reason || String(reason).trim().length === 0) {
+      return json({ error: "Missing cancellation reason" }, 400);
+    }
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
@@ -53,12 +75,21 @@ Deno.serve(async (req) => {
       .eq("id", orderId)
       .maybeSingle();
 
-    if (orderError) return json({ error: orderError.message }, 400);
-    if (!order || order.user_id !== user.id) return json({ error: "Order not found" }, 404);
+    if (orderError) {
+      return json({ error: `Database error: ${orderError.message}` }, 400);
+    }
+
+    if (!order) {
+      return json({ error: "Order not found" }, 404);
+    }
+
+    if (order.user_id !== user.id) {
+      return json({ error: "Unauthorized - order belongs to another user" }, 403);
+    }
 
     const currentStatus = String(order.status || "").toLowerCase();
     if (!CANCELLABLE_STATUSES.includes(currentStatus)) {
-      return json({ error: `Order cannot be cancelled from status '${order.status}'.` }, 400);
+      return json({ error: `Cannot cancel order with status '${order.status}'` }, 400);
     }
 
     const nextShippingAddress = {
@@ -79,10 +110,17 @@ Deno.serve(async (req) => {
       .select("id, order_number, status, shipping_address")
       .single();
 
-    if (updateError) return json({ error: updateError.message }, 400);
+    if (updateError) {
+      return json({ error: `Update failed: ${updateError.message}` }, 400);
+    }
+
+    if (!updatedOrder) {
+      return json({ error: "Order update returned no data" }, 500);
+    }
 
     return json({ success: true, order: updatedOrder });
   } catch (error: any) {
-    return json({ error: error.message || "Unexpected error" }, 500);
+    console.error("Unhandled error in order-actions:", error);
+    return json({ error: error.message || "Unexpected server error" }, 500);
   }
 });

@@ -140,18 +140,24 @@ const Orders = () => {
     const note = (cancelNoteByOrder[order.id] || '').trim();
     const reason = baseReason === 'Other' && note ? note : baseReason;
 
+    if (!reason || reason.trim().length === 0) {
+      toast({ title: 'Invalid reason', description: 'Please provide a valid cancellation reason.', variant: 'destructive' });
+      return;
+    }
+
     setCancellingOrderId(order.id);
     try {
-      const cancelRes = await supabase.functions.invoke('order-actions', {
+      const { data: cancelRes, error: cancelError } = await supabase.functions.invoke('order-actions', {
         body: {
           action: 'cancel_order',
           orderId: order.id,
-          reason,
+          reason: reason.trim(),
         },
       });
 
-      if (cancelRes.error) throw new Error(cancelRes.error.message || 'Cancellation failed');
-      if (cancelRes.data?.error) throw new Error(cancelRes.data.error);
+      if (cancelError) throw new Error(cancelError.message || 'Function error');
+      if (cancelRes?.error) throw new Error(cancelRes.error);
+      if (!cancelRes?.success) throw new Error('Cancellation failed - no success response');
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -182,6 +188,7 @@ const Orders = () => {
       await loadOrders();
       setExpandedOrder(order.id);
     } catch (err: any) {
+      console.error('Cancel error:', err);
       toast({ title: 'Unable to cancel', description: err.message || 'Please try again.', variant: 'destructive' });
     } finally {
       setCancellingOrderId(null);
