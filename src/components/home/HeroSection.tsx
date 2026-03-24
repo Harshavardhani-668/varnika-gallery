@@ -16,16 +16,6 @@ const HeroSection = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showScene3D, setShowScene3D] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const media = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px)");
-    const sync = () => setReduceMotion(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -33,17 +23,12 @@ const HeroSection = () => {
   }, []);
 
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isSmallScreen = window.matchMedia("(max-width: 767px)").matches;
-
-    if (prefersReducedMotion || isSmallScreen) {
-      return;
-    }
+    // Show 3D scene on all devices, but defer more aggressively for faster first load.
 
     if ("requestIdleCallback" in window) {
       const id = (window as Window & {
         requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number;
-      }).requestIdleCallback(() => setShowScene3D(true), { timeout: 2500 });
+      }).requestIdleCallback(() => setShowScene3D(true), { timeout: 5000 });
 
       return () => {
         const cancelIdle = (window as Window & {
@@ -55,12 +40,11 @@ const HeroSection = () => {
       };
     }
 
-    const timeoutId = window.setTimeout(() => setShowScene3D(true), 1200);
+    const timeoutId = window.setTimeout(() => setShowScene3D(true), 2800);
     return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) return;
     if (!featuredProducts?.length) return;
     const timer = setInterval(() => {
       setIsAnimating(true);
@@ -70,26 +54,35 @@ const HeroSection = () => {
       }, 500);
     }, 6000);
     return () => clearInterval(timer);
-  }, [featuredProducts?.length, reduceMotion]);
+  }, [featuredProducts?.length]);
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section || reduceMotion) return;
+    if (!section) return;
 
     let frameId = 0;
 
-    const handleMove = (event: MouseEvent) => {
+    const updatePosition = (clientX: number, clientY: number) => {
       if (frameId) {
         cancelAnimationFrame(frameId);
       }
 
       frameId = requestAnimationFrame(() => {
         const rect = section.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width;
-        const y = (event.clientY - rect.top) / rect.height;
+        const x = (clientX - rect.left) / rect.width;
+        const y = (clientY - rect.top) / rect.height;
         section.style.setProperty("--hero-x", `${Math.max(0, Math.min(1, x))}`);
         section.style.setProperty("--hero-y", `${Math.max(0, Math.min(1, y))}`);
       });
+    };
+
+    const handleMove = (event: MouseEvent) => {
+      updatePosition(event.clientX, event.clientY);
+    };
+
+    const handleTouch = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      updatePosition(touch.clientX, touch.clientY);
     };
 
     const handleLeave = () => {
@@ -97,17 +90,24 @@ const HeroSection = () => {
       section.style.setProperty("--hero-y", "0.45");
     };
 
+    // Desktop mouse events
     section.addEventListener("mousemove", handleMove, { passive: true });
     section.addEventListener("mouseleave", handleLeave, { passive: true });
+
+    // Mobile touch events for parallax effect
+    section.addEventListener("touchmove", handleTouch, { passive: true });
+    section.addEventListener("touchend", handleLeave, { passive: true });
 
     return () => {
       section.removeEventListener("mousemove", handleMove);
       section.removeEventListener("mouseleave", handleLeave);
+      section.removeEventListener("touchmove", handleTouch);
+      section.removeEventListener("touchend", handleLeave);
       if (frameId) {
         cancelAnimationFrame(frameId);
       }
     };
-  }, [reduceMotion]);
+  }, []);
 
   const scrollToContent = () => {
     document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
@@ -151,7 +151,7 @@ const HeroSection = () => {
         </Suspense>
       )}
 
-      <FloatingClouds count={reduceMotion ? 2 : 4} />
+      <FloatingClouds count={4} />
 
       {/* Warm gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-cream-dark to-background" />

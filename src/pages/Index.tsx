@@ -1,27 +1,19 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
-import TrustStrip from "@/components/home/TrustStrip";
-import ShopByOccasion from "@/components/home/ShopByOccasion";
-import HowItWorks from "@/components/home/HowItWorks";
-import GalleryGrid from "@/components/home/GalleryGrid";
-import InstagramSection from "@/components/home/InstagramSection";
-import FinalCTA from "@/components/home/FinalCTA";
-import Newsletter from "@/components/home/Newsletter";
 import EmojiFlow from "@/components/effects/EmojiFlow";
+
+const TrustStrip = lazy(() => import("@/components/home/TrustStrip"));
+const ShopByOccasion = lazy(() => import("@/components/home/ShopByOccasion"));
+const HowItWorks = lazy(() => import("@/components/home/HowItWorks"));
+const GalleryGrid = lazy(() => import("@/components/home/GalleryGrid"));
+const InstagramSection = lazy(() => import("@/components/home/InstagramSection"));
+const FinalCTA = lazy(() => import("@/components/home/FinalCTA"));
+const Newsletter = lazy(() => import("@/components/home/Newsletter"));
 
 const Index = () => {
   const [emojiEnabled, setEmojiEnabled] = useState(true);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const media = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px)");
-    const sync = () => setEmojiEnabled(!media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
 
   return (
     <div className="min-h-screen relative">
@@ -29,13 +21,15 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <TrustStrip />
-        <ShopByOccasion />
-        <HowItWorks />
-        <GalleryGrid />
-        <InstagramSection />
-        <FinalCTA />
-        <Newsletter />
+        <Suspense fallback={<div className="py-16" />}>
+          <TrustStrip />
+          <ShopByOccasion />
+          <HowItWorks />
+          <GalleryGrid />
+          <InstagramSection />
+          <FinalCTA />
+          <Newsletter />
+        </Suspense>
       </main>
       <Footer />
       {/* Emoji toggle */}

@@ -48,7 +48,8 @@ const Testimonials = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const media = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px)");
+    // Only check for prefers-reduced-motion, allow animations on mobile
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduceMotion(media.matches);
     update();
 

@@ -135,16 +135,31 @@
   }
 
   .hover-lift {
-    @apply transition-all duration-500 ease-boutique hover:-translate-y-1.5 hover:shadow-elevated;
+    @apply transition-all duration-500 ease-boutique;
+  }
+
+  @media (hover: hover) {
+    .hover-lift:hover {
+      @apply -translate-y-1.5 shadow-elevated;
+    }
   }
 
   .card-lift {
     transition: all 0.6s var(--transition-boutique);
   }
 
-  .card-lift:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-card-hover);
+  @media (hover: hover) {
+    .card-lift:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-card-hover);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .card-lift {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-floating);
+    }
   }
 
   .image-reveal {
@@ -156,16 +171,36 @@
     @apply absolute inset-0 bg-gradient-to-t from-espresso/40 via-transparent to-transparent opacity-0 transition-opacity duration-500;
   }
 
-  .image-reveal:hover::after {
-    @apply opacity-100;
+  /* Show overlay on hover for desktop and on touch/focus for mobile */
+  @media (hover: hover) {
+    .image-reveal:hover::after {
+      @apply opacity-100;
+    }
+  }
+
+  /* Always show overlay on mobile when image is visible (for better UX) */
+  @media (max-width: 640px) {
+    .image-reveal::after {
+      @apply opacity-50;
+    }
   }
 
   .story-overlay {
     @apply absolute inset-0 flex items-end p-6 opacity-0 transition-all duration-500;
   }
 
-  .image-reveal:hover .story-overlay {
-    @apply opacity-100;
+  /* Overlay visible on hover for desktop */
+  @media (hover: hover) {
+    .image-reveal:hover .story-overlay {
+      @apply opacity-100;
+    }
+  }
+
+  /* Overlay visible on mobile by default */
+  @media (max-width: 640px) {
+    .story-overlay {
+      @apply opacity-100;
+    }
   }
 
   .masonry-grid {
@@ -196,9 +231,19 @@
     transition: all 0.6s var(--transition-boutique);
   }
 
-  .floating-shadow:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-floating-hover);
+  /* Lift on hover for desktop only */
+  @media (hover: hover) {
+    .floating-shadow:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-floating-hover);
+    }
+  }
+
+  /* Always show slight lift on mobile */
+  @media (max-width: 640px) {
+    .floating-shadow {
+      transform: translateY(-3px);
+    }
   }
 
   /* Soft glow on hover */
@@ -206,14 +251,30 @@
     transition: all 0.6s var(--transition-boutique);
   }
 
-  .glow-hover:hover {
-    box-shadow: 0 0 20px hsl(var(--gold) / 0.3);
-    transform: scale(1.02);
+  /* Glow effect on hover for desktop */
+  @media (hover: hover) {
+    .glow-hover:hover {
+      box-shadow: 0 0 20px hsl(var(--gold) / 0.3);
+      transform: scale(1.02);
+    }
+  }
+
+  /* Subtle glow on mobile */
+  @media (max-width: 640px) {
+    .glow-hover {
+      box-shadow: 0 0 10px hsl(var(--gold) / 0.15);
+    }
   }
 
   /* Button glow */
-  .button-glow:hover {
-    box-shadow: 0 4px 20px hsl(var(--gold) / 0.3);
+  .button-glow {
+    transition: box-shadow 0.3s var(--transition-boutique);
+  }
+
+  @media (hover: hover) {
+    .button-glow:hover {
+      box-shadow: 0 4px 20px hsl(var(--gold) / 0.3);
+    }
   }
 
   /* Pulse glow - calm */
@@ -228,13 +289,24 @@
     user-select: none;
   }
 
-  .interactive-element:hover {
-    transform: translateY(-2px);
+  @media (hover: hover) {
+    .interactive-element:hover {
+      transform: translateY(-2px);
+    }
   }
 
-  .interactive-element:active {
-    transform: translateY(0px);
-    transition: transform 0.1s;
+  @media (max-width: 640px) {
+    .interactive-element:active {
+      transform: scale(0.98);
+      transition: transform 0.15s;
+    }
+  }
+
+  @media (hover: hover) {
+    .interactive-element:active {
+      transform: translateY(0px);
+      transition: transform 0.1s;
+    }
   }
 
   /* Text shadows */
@@ -252,7 +324,8 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce), (max-width: 767px) {
+/* Only disable animations when explicitly requested by user */
+@media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
@@ -263,6 +336,23 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.2s !important;
+  }
+}
+
+/* Optimize animations for mobile - don't disable, just ensure they don't cause layout shift */
+@media (max-width: 767px) {
+  /* Keep transition timing snappy for key animation utility classes only */
+  .animate-bounce-in,
+  .animate-slide-down,
+  .animate-fade-in-up,
+  .animate-fade-in,
+  .animate-gentle-bob,
+  .animate-gentle-float,
+  .animate-reveal-up,
+  .animate-scale-reveal,
+  .animate-slide-in-left,
+  .animate-slide-in-right {
+    will-change: transform, opacity;
   }
 }
 
@@ -507,6 +597,79 @@
   100% {
     opacity: 0;
     transform: translateY(-120px) translateX(var(--curve-x, 0px)) scale(0.4) rotate(30deg);
+  }
+}
+
+/* ========================================
+   MOBILE ANIMATION OPTIMIZATIONS
+   ======================================== */
+
+/* Optimize animations for mobile - reduce duration for snappier feel */
+@media (max-width: 768px) {
+  /* Use transform and opacity for better performance */
+  .animate-bounce-in,
+  .animate-slide-down,
+  .animate-fade-in-up,
+  .animate-fade-in,
+  .animate-gentle-bob,
+  .animate-gentle-float,
+  .animate-reveal-up,
+  .animate-scale-reveal,
+  .animate-slide-in-left,
+  .animate-slide-in-right {
+    /* All animations use GPU-accelerated properties */
+    will-change: transform, opacity;
+  }
+
+  /* Slightly faster animation timings on mobile for better UX */
+  .animate-bounce-in {
+    animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.4s ease-out;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-in-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  /* Reduce intensity of continuous animations on mobile */
+  .animate-gentle-bob {
+    animation: gentleBob 2.5s ease-in-out infinite;
+  }
+
+  .animate-gentle-float {
+    animation: gentleFloat 3.5s ease-in-out infinite;
+  }
+
+  .animate-reveal-up {
+    animation: revealUp 0.6s ease-out forwards;
+  }
+
+  .animate-scale-reveal {
+    animation: scaleReveal 0.5s ease-out forwards;
+  }
+
+  .animate-sparkle-pulse {
+    animation: sparklePulse 2.5s ease-in-out infinite;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.6s ease-in-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.6s ease-in-out forwards;
+  }
+
+  /* Pulse glow - reduce intensity on mobile */
+  .pulse-glow {
+    animation: pulseGlow 2.5s ease-in-out infinite;
   }
 }
 

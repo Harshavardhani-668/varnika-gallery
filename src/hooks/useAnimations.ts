@@ -88,3 +88,60 @@ export function useStaggeredReveal(itemCount: number, delayMs: number = 100) {
 
   return { containerRef, visibleItems };
 }
+
+/**
+ * Hook for handling touch/hover animations on mobile devices
+ * Provides touch feedback and interactive animations without hover
+ */
+export function useTouchAnimation<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [isTouched, setIsTouched] = useState(false);
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
+
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const element = ref.current;
+    if (!element) return;
+
+    const handleTouchStart = () => {
+      setIsTouched(true);
+    };
+
+    const handleTouchEnd = () => {
+      setIsTouched(false);
+    };
+
+    element.addEventListener("touchstart", handleTouchStart, { passive: true });
+    element.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      element.removeEventListener("touchstart", handleTouchStart);
+      element.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isMobile]);
+
+  return { ref, isTouched };
+}
+
+/**
+ * Hook to detect if device supports hover (desktop) or touch (mobile)
+ */
+export function useHoverSupport() {
+  const [supportsHover, setSupportsHover] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(hover: hover)");
+    setSupportsHover(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setSupportsHover(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  return supportsHover;
+}

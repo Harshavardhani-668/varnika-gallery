@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useEffect, useState } from "react";
 
 interface FloatingCloudProps {
   count?: number;
@@ -23,6 +23,19 @@ const cloudColors = [
 ];
 
 const FloatingClouds = memo(({ count = 6 }: FloatingCloudProps) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const sync = () => setIsMobile(mediaQuery.matches);
+
+    sync();
+    mediaQuery.addEventListener("change", sync);
+    return () => mediaQuery.removeEventListener("change", sync);
+  }, []);
+
   const clouds = useMemo(
     () =>
       Array.from({ length: Math.min(count, 6) }, (_, i) => ({
@@ -37,12 +50,16 @@ const FloatingClouds = memo(({ count = 6 }: FloatingCloudProps) => {
     [count]
   );
 
+  // Reduce number of clouds on mobile for better performance
+  const displayClouds = isMobile ? clouds.slice(0, 2) : clouds;
+  const containerClassName = "absolute inset-0 overflow-hidden pointer-events-none z-[2]";
+
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
-      {clouds.map((cloud) => (
+    <div className={containerClassName}>
+      {displayClouds.map((cloud) => (
         <svg
           key={cloud.id}
-          className="absolute opacity-60"
+          className="absolute opacity-70"
           style={{
             top: cloud.top,
             left: "-200px",
@@ -51,6 +68,8 @@ const FloatingClouds = memo(({ count = 6 }: FloatingCloudProps) => {
             animation: `cloudFloat ${cloud.duration} linear infinite`,
             animationDelay: cloud.delay,
             willChange: "transform",
+            // Use transform3d for GPU acceleration
+            transform: "translate3d(0, 0, 0)",
           }}
           viewBox="0 0 120 60"
           fill="none"
