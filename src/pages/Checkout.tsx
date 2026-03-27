@@ -92,7 +92,7 @@ const Checkout = () => {
   };
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const shipping = subtotal >= 5000 ? 0 : 199;
+  const shipping = subtotal >= 1000 ? 0 : 199; // Free delivery over ₹1000
   const total = subtotal + shipping;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

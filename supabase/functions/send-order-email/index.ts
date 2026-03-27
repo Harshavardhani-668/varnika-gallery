@@ -138,6 +138,8 @@ function getOrderConfirmationEmail(orderNumber: string, customerName: string, it
                 <strong>What happens next?</strong><br>
                 • We'll prepare your order with utmost care<br>
                 • You'll receive a shipping notification once dispatched<br>
+                • Shipping: ₹199 (Free over ₹1000)<br>
+                • Delivery time: 10 days from order confirmation<br>
                 • Track your order anytime in "My Orders"<br>
               </p>
 
