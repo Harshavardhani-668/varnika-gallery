@@ -14,9 +14,14 @@ const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [promoting, setPromoting] = useState<string | null>(null);
   const { toast } = useToast();
+  const logDevError = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+      console.error(...args);
+    }
+  };
 
   const fetchUsers = () => {
-    getAllUsers().then(d => setUsers(d.users)).catch(console.error);
+    getAllUsers().then(d => setUsers(d.users)).catch((error) => logDevError(error));
   };
 
   useEffect(() => { fetchUsers(); }, []);
@@ -46,7 +51,7 @@ const AdminUsers = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" asChild><Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
+          <Button variant="ghost" size="icon" asChild aria-label="Back to admin dashboard"><Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
           <h1 className="font-display text-3xl font-bold text-foreground">Users Management</h1>
         </div>
 

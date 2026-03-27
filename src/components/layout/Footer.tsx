@@ -28,12 +28,18 @@ const Footer = () => {
                 href="https://www.instagram.com/varnika_atelier/"
                 target="_blank"
                 rel="noreferrer"
-                className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all duration-300"
+                className="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all duration-300"
                 aria-label="Instagram @varnika_atelier"
               >
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all duration-300">
+              <a
+                href="https://www.facebook.com/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Varnika on Facebook"
+                className="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-gold hover:text-foreground transition-all duration-300"
+              >
                 <Facebook className="w-5 h-5" />
               </a>
             </div>
@@ -57,7 +63,7 @@ const Footer = () => {
             <ul className="space-y-3">
               {["Custom Orders", "Shipping Info", "Returns", "FAQ"].map((item) =>
               <li key={item}>
-                  <Link to="#" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors duration-300 text-sm font-body">
+                  <Link to="/contact" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors duration-300 text-sm font-body">
                     {item}
                   </Link>
                 </li>

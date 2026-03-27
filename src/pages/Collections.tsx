@@ -70,10 +70,10 @@ const Collections = () => {
           <span className="text-gold text-sm tracking-[0.3em] uppercase font-body">
             Our Collection
           </span>
-          <h1 className="font-display text-4xl md:text-6xl text-espresso mt-4 mb-6 text-shadow-soft">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl text-espresso mt-4 mb-6 text-shadow-soft">
             All Masterpieces
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto font-body">
+          <p className="text-muted-foreground max-w-2xl mx-auto font-body text-sm sm:text-base">
             Explore our complete collection of handcrafted art pieces, each
             telling its own unique story.
           </p>
@@ -208,7 +208,7 @@ const Collections = () => {
                 >
                   <article
                     className={cn(
-                      "relative bg-card rounded-sm overflow-hidden floating-shadow transition-all duration-500",
+                      "relative bg-card rounded-sm overflow-hidden floating-shadow transition-all duration-500 border border-border/60 group-hover:border-gold/40 group-hover:-translate-y-1",
                       visibleItems.has(index) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
                     )}
                     style={{ transitionDelay: `${index * 50}ms` }}
@@ -263,7 +263,7 @@ const Collections = () => {
                       <button
                         onClick={(e) => toggleLike(art.id, e)}
                         className={cn(
-                          "absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 interactive-element",
+                          "absolute top-3 right-3 w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 interactive-element",
                           likedItems.has(art.id)
                             ? "bg-terracotta text-cream"
                             : "bg-cream/90 text-espresso hover:bg-cream"
@@ -276,13 +276,13 @@ const Collections = () => {
                     </div>
 
                     {/* Content */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="p-5">
+                      <div className="flex items-start justify-between gap-3 mb-3">
                         <div>
-                          <p className="text-xs text-muted-foreground tracking-wider uppercase mb-1">{art.category}</p>
-                          <h3 className="font-display text-lg text-espresso group-hover:text-gold transition-colors duration-300 line-clamp-1">
+                          <p className="text-xs text-muted-foreground tracking-wider uppercase mb-1.5">{art.category}</p>
+                          <p className="font-display text-lg leading-snug text-espresso group-hover:text-gold transition-colors duration-300 line-clamp-1">
                             {art.name}
-                          </h3>
+                          </p>
                         </div>
                         {art.rating > 0 && (
                           <div className="flex items-center gap-1 shrink-0">
@@ -291,7 +291,7 @@ const Collections = () => {
                           </div>
                         )}
                       </div>
-                      <div className="flex items-baseline gap-2">
+                      <div className="flex items-baseline gap-2 pt-1">
                         {art.salePrice ? (
                           <>
                             <span className="font-display text-lg text-terracotta">₹{art.salePrice.toLocaleString("en-IN")}</span>

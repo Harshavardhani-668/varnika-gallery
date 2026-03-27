@@ -67,7 +67,11 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
             onChange={(e) => setQuery(e.target.value)}
             className="border-0 shadow-none focus-visible:ring-0 font-body text-base h-auto p-0"
           />
-          <button onClick={onClose} className="shrink-0 p-1 hover:bg-muted rounded-lg transition-colors">
+          <button
+            onClick={onClose}
+            className="shrink-0 w-11 h-11 sm:w-10 sm:h-10 inline-flex items-center justify-center hover:bg-muted rounded-lg transition-colors"
+            aria-label="Close search"
+          >
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
@@ -94,8 +98,9 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted shrink-0">
                     <img
                       src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
+                      alt={`${product.name} handmade gift product image`}
+                      loading="lazy"
+                      className="w-full h-full max-w-full object-cover"
                       onError={(e) => {
                         e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=100&h=100&fit=crop";
                       }}

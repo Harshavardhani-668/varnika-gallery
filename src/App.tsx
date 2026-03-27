@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -17,6 +17,8 @@ const Collections = lazy(() => import("./pages/Collections"));
 const Gallery = lazy(() => import("./pages/Gallery"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -36,6 +38,16 @@ const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const Chatbot = lazy(() => import("./components/Chatbot"));
 
 const AppLoader = () => <div className="min-h-screen bg-background" />;
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [pathname]);
+
+  return null;
+};
 
 const DeferredChatbot = () => {
   const [isReady, setIsReady] = useState(false);
@@ -89,6 +101,7 @@ const App = () => (
           }}
         />
         <BrowserRouter>
+          <ScrollToTop />
           <AuthRedirectHandler />
           <WelcomeModal />
           <Suspense fallback={<AppLoader />}>
@@ -100,6 +113,8 @@ const App = () => (
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

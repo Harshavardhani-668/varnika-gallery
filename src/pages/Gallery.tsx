@@ -44,10 +44,10 @@ const Gallery = () => {
           <span className="text-gold text-sm tracking-[0.3em] uppercase font-body animate-fade-in">
             Design Gallery
           </span>
-          <h1 className="font-display text-5xl md:text-7xl text-espresso mt-4 mb-6 animate-fade-in-up text-shadow-soft">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl text-espresso mt-4 mb-6 animate-fade-in-up text-shadow-soft">
             Our Creations
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto font-body text-lg animate-fade-in-up animate-delay-2">
+          <p className="text-muted-foreground max-w-2xl mx-auto font-body text-base sm:text-lg animate-fade-in-up animate-delay-2">
             Discover our complete gallery of handmade gifts — each piece crafted with love,
             creativity, and heartfelt artistry.
           </p>
@@ -94,8 +94,9 @@ const Gallery = () => {
                     <div className="image-reveal aspect-auto">
                       <img
                         src={art.imageUrl}
-                        alt={art.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        alt={`${art.name} handmade gift product image`}
+                        loading="lazy"
+                        className="w-full h-full max-w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         onError={(e) => {
                           e.currentTarget.src = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=800&fit=crop";
                         }}
@@ -134,7 +135,7 @@ const Gallery = () => {
                       <button
                         onClick={(e) => toggleLike(art.id, e)}
                         className={cn(
-                          "absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 interactive-element",
+                          "absolute top-4 right-4 w-11 h-11 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 interactive-element",
                           likedItems.has(art.id)
                             ? "bg-terracotta text-cream"
                             : "bg-cream/90 text-espresso hover:bg-cream"
@@ -156,9 +157,9 @@ const Gallery = () => {
                           <p className="text-xs text-muted-foreground tracking-wider uppercase mb-1">
                             {art.category}
                           </p>
-                          <h3 className="font-display text-xl text-espresso group-hover:text-gold transition-colors duration-300">
+                          <p className="font-display text-xl text-espresso group-hover:text-gold transition-colors duration-300">
                             {art.name}
-                          </h3>
+                          </p>
                         </div>
                         {art.rating > 0 && (
                           <div className="flex items-center gap-1 shrink-0">
@@ -192,12 +193,12 @@ const Gallery = () => {
 
           {/* CTA */}
           <div className="text-center mt-16">
-            <Link to="/collections">
-              <Button variant="artisan" size="xl" className="group interactive-element">
+            <Button variant="artisan" size="xl" className="group interactive-element" asChild>
+              <Link to="/collections">
                 Browse All Collections
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </main>

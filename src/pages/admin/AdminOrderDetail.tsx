@@ -12,9 +12,14 @@ const AdminOrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { getOrderDetail, loading } = useAdmin();
   const [order, setOrder] = useState<any>(null);
+  const logDevError = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+      console.error(...args);
+    }
+  };
 
   useEffect(() => {
-    if (id) getOrderDetail(id).then(d => setOrder(d.order)).catch(console.error);
+    if (id) getOrderDetail(id).then(d => setOrder(d.order)).catch((error) => logDevError(error));
   }, [id]);
 
   if (loading || !order) {
@@ -31,7 +36,7 @@ const AdminOrderDetail = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" asChild><Link to="/admin/orders"><ArrowLeft className="h-5 w-5" /></Link></Button>
+          <Button variant="ghost" size="icon" asChild aria-label="Back to orders list"><Link to="/admin/orders"><ArrowLeft className="h-5 w-5" /></Link></Button>
           <h1 className="font-display text-3xl font-bold text-foreground">Order {order.order_number}</h1>
         </div>
 
@@ -100,7 +105,7 @@ const AdminOrderDetail = () => {
                     <TableRow key={item.id}>
                       <TableCell className="flex items-center gap-3">
                         {item.product_image && (
-                          <img src={item.product_image} alt={item.product_name} className="w-10 h-10 rounded object-cover" />
+                          <img src={item.product_image} alt={`${item.product_name} handmade gift product image`} loading="lazy" className="w-10 h-10 max-w-full rounded object-cover" />
                         )}
                         <span className="font-medium">{item.product_name}</span>
                       </TableCell>

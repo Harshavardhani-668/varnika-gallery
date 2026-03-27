@@ -11,9 +11,14 @@ import { format } from 'date-fns';
 const AdminDashboard = () => {
   const { getDashboardStats, loading } = useAdmin();
   const [stats, setStats] = useState<any>(null);
+  const logDevError = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+      console.error(...args);
+    }
+  };
 
   useEffect(() => {
-    getDashboardStats().then(setStats).catch(console.error);
+    getDashboardStats().then(setStats).catch((error) => logDevError(error));
   }, [getDashboardStats]);
 
   if (loading || !stats) {

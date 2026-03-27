@@ -38,7 +38,7 @@ const Index = () => {
           e.stopPropagation();
           setEmojiEnabled((p) => !p);
         }}
-        className="fixed bottom-6 right-6 z-[60] w-10 h-10 rounded-full bg-card shadow-elevated flex items-center justify-center text-lg hover:scale-110 transition-transform border border-border"
+        className="fixed bottom-6 right-6 z-[60] w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-card shadow-elevated flex items-center justify-center text-lg hover:scale-110 transition-transform border border-border"
         aria-label="Toggle emoji effects"
         title={emojiEnabled ? "Disable emoji effects" : "Enable emoji effects"}
       >

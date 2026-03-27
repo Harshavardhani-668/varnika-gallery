@@ -72,6 +72,16 @@ interface OrderItem {
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const logDevError = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+      console.error(...args);
+    }
+  };
+  const logDevWarn = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+      console.warn(...args);
+    }
+  };
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [orderCustomFlags, setOrderCustomFlags] = useState<Record<string, boolean>>({});
@@ -153,19 +163,19 @@ const Orders = () => {
 
       // Check for function-level errors (network, auth, etc.)
       if (cancelRes.error) {
-        console.error('Function error:', cancelRes.error);
+        logDevError('Function error:', cancelRes.error);
         throw new Error(cancelRes.error.message || 'Failed to cancel order');
       }
 
       // Check for API response errors (validation, not found, etc.)
       if (cancelRes.data?.error) {
-        console.error('API error:', cancelRes.data.error);
+        logDevError('API error:', cancelRes.data.error);
         throw new Error(cancelRes.data.error);
       }
 
       // Verify success flag
       if (!cancelRes.data?.success) {
-        console.error('Unexpected response:', cancelRes.data);
+        logDevError('Unexpected response:', cancelRes.data);
         throw new Error('Order cancellation failed - unexpected response');
       }
 
@@ -210,16 +220,16 @@ const Orders = () => {
               }),
             }).catch((emailError) => {
               // Log email error but don't block the flow - order is already cancelled
-              console.warn('Failed to send cancellation email:', emailError);
+              logDevWarn('Failed to send cancellation email:', emailError);
             });
           }
         }
       } catch (emailError: any) {
         // Silent fail for email - order is already cancelled
-        console.warn('Email notification error:', emailError.message);
+        logDevWarn('Email notification error:', emailError.message);
       }
     } catch (err: any) {
-      console.error('Cancel order error:', err);
+      logDevError('Cancel order error:', err);
       toast({
         title: 'Unable to cancel order',
         description: err.message || 'An unexpected error occurred. Please try again.',
@@ -237,7 +247,7 @@ const Orders = () => {
         <div className="pt-32 pb-20 px-4 text-center">
           <Package className="w-16 h-16 text-muted mx-auto mb-4" />
           <h1 className="font-display text-3xl text-foreground mb-4">Sign in to view orders</h1>
-          <Link to="/login?redirect=/orders"><Button variant="artisan">Sign In</Button></Link>
+          <Button variant="artisan" asChild><Link to="/login?redirect=/orders">Sign In</Link></Button>
         </div>
         <Footer />
       </div>
@@ -262,7 +272,7 @@ const Orders = () => {
                 <Package className="w-16 h-16 text-muted mx-auto mb-4" />
                 <h2 className="font-display text-2xl text-foreground mb-2">No orders yet</h2>
                 <p className="text-muted-foreground font-body mb-6">Start shopping to see your orders here.</p>
-                <Link to="/collections"><Button variant="artisan" className="button-glow">Browse Collections</Button></Link>
+                <Button variant="artisan" className="button-glow" asChild><Link to="/collections">Browse Collections</Link></Button>
               </CardContent>
             </Card>
           ) : (
@@ -330,7 +340,7 @@ const Orders = () => {
                         {orderItems[order.id].map(item => (
                           <div key={item.id} className="flex items-center gap-3">
                             {item.product_image && (
-                              <img src={item.product_image} alt={item.product_name} className="w-12 h-12 rounded-lg object-cover" />
+                              <img src={item.product_image} alt={`${item.product_name} handmade gift product image`} loading="lazy" className="w-12 h-12 max-w-full rounded-lg object-cover" />
                             )}
                             <div className="flex-1">
                               <p className="font-body text-sm text-foreground">{item.product_name}</p>

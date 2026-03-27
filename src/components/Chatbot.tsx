@@ -120,7 +120,8 @@ const Chatbot = () => {
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="text-cream/80 hover:text-cream transition-colors interactive-element"
+            className="w-11 h-11 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-full text-cream/80 hover:text-cream transition-colors interactive-element"
+            aria-label="Close chat"
           >
             <X className="w-5 h-5" />
           </button>
@@ -182,6 +183,7 @@ const Chatbot = () => {
               type="submit"
               size="icon"
               disabled={!input.trim() || isLoading}
+              aria-label="Send message"
               className="rounded-full shrink-0"
               style={{
                 background: "linear-gradient(135deg, hsl(350 90% 91%), hsl(270 40% 65%))",

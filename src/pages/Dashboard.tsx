@@ -268,7 +268,7 @@ const Dashboard = () => {
                         <p className="text-muted-foreground">{addr.city}, {addr.state} {addr.postal_code}</p>
                         {addr.phone && <p className="text-muted-foreground">{addr.phone}</p>}
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAddress(addr.id)} className="text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAddress(addr.id)} className="text-destructive" aria-label="Delete address"><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   ))}
                 </CardContent>
@@ -284,7 +284,7 @@ const Dashboard = () => {
                     <div className="text-center py-8">
                       <Package className="w-12 h-12 text-muted mx-auto mb-3" />
                       <p className="text-muted-foreground font-body">No orders yet.</p>
-                      <Link to="/collections"><Button variant="outline" className="mt-4">Start Shopping</Button></Link>
+                      <Button variant="outline" className="mt-4" asChild><Link to="/collections">Start Shopping</Link></Button>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -329,14 +329,14 @@ const Dashboard = () => {
                         <div key={item.id} className="border border-border rounded-xl p-3 flex gap-3">
                           {item.product_image && (
                             <Link to={`/product/${item.product_id}`}>
-                              <img src={item.product_image} alt={item.product_name} className="w-16 h-16 rounded-lg object-cover" />
+                              <img src={item.product_image} alt={`${item.product_name} handmade gift product image`} loading="lazy" className="w-16 h-16 max-w-full rounded-lg object-cover" />
                             </Link>
                           )}
                           <div className="flex-1 min-w-0">
                             <Link to={`/product/${item.product_id}`} className="font-body text-sm text-foreground hover:text-gold truncate block">{item.product_name}</Link>
                             <p className="font-display text-sm text-gold">₹{item.price.toLocaleString('en-IN')}</p>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => removeFromWishlist(item.product_id)} className="text-destructive shrink-0"><Trash2 className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => removeFromWishlist(item.product_id)} className="text-destructive shrink-0" aria-label={`Remove ${item.product_name} from wishlist`}><Trash2 className="w-4 h-4" /></Button>
                         </div>
                       ))}
                     </div>
@@ -360,7 +360,7 @@ const Dashboard = () => {
                       {recentlyViewed.map(item => (
                         <Link key={item.id} to={`/product/${item.product_id}`} className="group border border-border rounded-xl overflow-hidden hover-lift">
                           {item.product_image && (
-                            <img src={item.product_image} alt={item.product_name} className="w-full h-32 object-cover" />
+                            <img src={item.product_image} alt={`${item.product_name} handmade gift product image`} loading="lazy" className="w-full h-32 max-w-full object-cover" />
                           )}
                           <div className="p-3">
                             <p className="font-body text-sm text-foreground group-hover:text-gold truncate">{item.product_name}</p>

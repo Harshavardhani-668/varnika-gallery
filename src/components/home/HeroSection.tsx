@@ -201,10 +201,10 @@ const HeroSection = () => {
             >
               <img
                 src={currentArt.imageUrl}
-                alt={currentArt.name}
-                className="w-full h-full object-cover"
-                loading="eager"
-                fetchPriority="high"
+                alt={`${currentArt.name} handmade gift product image`}
+                className="w-full h-full max-w-full object-cover"
+                loading="lazy"
+                fetchPriority="low"
                 decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/40" />
@@ -215,7 +215,7 @@ const HeroSection = () => {
       )}
 
       {/* Content */}
-      <div className="relative z-10 varnika-container w-full py-32 md:py-40">
+      <div className="relative z-10 varnika-container w-full py-24 sm:py-32 md:py-40">
         <div className="max-w-2xl">
           {/* Badge */}
           <div
@@ -228,13 +228,13 @@ const HeroSection = () => {
             }}
           >
             <Sparkles className="w-4 h-4 text-gold" />
-            <span className="text-sm text-gold font-body tracking-wide">Handcrafted with Love</span>
+            <span className="text-xs sm:text-sm text-gold font-body tracking-wide">Handcrafted with Love</span>
           </div>
 
           {/* Headline */}
           <h1
             className={cn(
-              "font-display text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-4 transition-all duration-800 ease-boutique",
+              "font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-4 transition-all duration-800 ease-boutique",
               isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
           >
@@ -245,7 +245,7 @@ const HeroSection = () => {
           {/* Subheading */}
           <p
             className={cn(
-              "font-body text-muted-foreground text-lg md:text-xl leading-relaxed mb-4 max-w-lg transition-all duration-800 ease-boutique",
+              "font-body text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed mb-4 max-w-lg transition-all duration-800 ease-boutique",
               isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
             style={{ transitionDelay: "200ms" }}
@@ -300,32 +300,34 @@ const HeroSection = () => {
             )}
             style={{ transitionDelay: "500ms" }}
           >
-            <Link to="/collections">
-              <Button
+            <Button
+                asChild
                 variant="artisan"
                 size="xl"
-                className="group button-glow border border-white/30 shadow-[0_14px_34px_rgba(164,131,196,0.30)]"
+                className="group w-full sm:w-auto button-glow border border-white/30 shadow-[0_14px_34px_rgba(164,131,196,0.30)]"
                 style={{
                   background: "linear-gradient(135deg, hsl(347 73% 85%), hsl(272 41% 73%))",
                 }}
               >
-                Shop Now
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                <Link to="/collections" className="w-full sm:w-auto">
+                  Shop Now
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </Link>
               </Button>
-            </Link>
-            <Link to="/collections">
-              <Button
+            <Button
+                asChild
                 variant="reserve"
                 size="xl"
-                className="group border border-white/45 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+                className="group w-full sm:w-auto border border-white/45 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
                 style={{
                   background: "linear-gradient(135deg, rgba(245,240,235,0.95), rgba(232,213,183,0.75))",
                 }}
               >
-                <Sparkles className="w-5 h-5" />
-                Create Custom Gift
+                <Link to="/collections" className="w-full sm:w-auto">
+                  <Sparkles className="w-5 h-5" />
+                  Create Custom Gift
+                </Link>
               </Button>
-            </Link>
           </div>
 
           {/* Slide indicators */}
@@ -351,7 +353,7 @@ const HeroSection = () => {
       {/* Scroll indicator */}
       <button
         onClick={scrollToContent}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-muted-foreground hover:text-foreground transition-colors animate-gentle-bob"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 px-3 py-2 rounded-full text-muted-foreground hover:text-foreground transition-colors animate-gentle-bob"
       >
         <div className="flex flex-col items-center gap-2">
           <span className="text-xs tracking-widest uppercase font-body">Discover</span>

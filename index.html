@@ -3,10 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Varnika Handmade Gifts | Custom Hampers, Cards & Handmade Surprises</title>
-    <meta name="description" content="Discover Varnika Handmade Gifts — unique handmade hampers, custom gift cards, and personalized gifts crafted with love in India. Perfect for birthdays, weddings, and special occasions." />
+    <title>Varnika - Handmade Gifts & Unique Crafts</title>
+    <meta name="description" content="Shop handmade gifts, pastel aesthetic crafts, and unique personalized items at Varnika." />
     <meta name="keywords" content="handmade gifts, custom hampers, personalized cards, Varnika Handmade Gifts, handmade gifts India, custom gift ideas, craft gifts, return gifts" />
     <meta name="author" content="Varnika Handmade Gifts" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="canonical" href="https://varnikaart.lovable.app" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -28,20 +30,65 @@
       />
     </noscript>
 
-    <meta property="og:title" content="Varnika Handmade Gifts | Custom Hampers, Cards & Handmade Surprises" />
-    <meta property="og:description" content="Discover Varnika Handmade Gifts — unique handmade hampers, custom gift cards, and personalized gifts crafted with love in India." />
+    <meta property="og:title" content="Varnika - Handmade Gifts & Unique Crafts" />
+    <meta property="og:description" content="Shop handmade gifts, pastel aesthetic crafts, and unique personalized items at Varnika." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://varnikaart.lovable.app" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:site_name" content="Varnika" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Varnika Handmade Gifts | Custom Hampers, Cards & Handmade Surprises" />
-    <meta name="twitter:description" content="Discover Varnika Handmade Gifts — unique handmade hampers, custom gift cards, and personalized gifts crafted with love in India." />
+    <meta name="twitter:title" content="Varnika - Handmade Gifts & Unique Crafts" />
+    <meta name="twitter:description" content="Shop handmade gifts, pastel aesthetic crafts, and unique personalized items at Varnika." />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "Varnika",
+            "url": "https://varnikaart.lovable.app",
+            "logo": "https://varnikaart.lovable.app/favicon.ico",
+            "description": "Varnika creates handmade gifts, pastel aesthetic crafts, and personalized items for special occasions.",
+            "sameAs": [
+              "https://varnikaart.lovable.app"
+            ]
+          },
+          {
+            "@type": "Product",
+            "name": "Personalized Handmade Gift Box",
+            "description": "A curated handmade gift box by Varnika, crafted for birthdays, anniversaries, and celebrations.",
+            "brand": {
+              "@type": "Brand",
+              "name": "Varnika"
+            },
+            "image": [
+              "https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=1200&q=80"
+            ],
+            "sku": "VARNIKA-GIFT-BOX-001",
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "INR",
+              "price": "1499",
+              "availability": "https://schema.org/InStock",
+              "url": "https://varnikaart.lovable.app/collections",
+              "itemCondition": "https://schema.org/NewCondition"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "126"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
 
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" defer></script>
   </body>
 </html>

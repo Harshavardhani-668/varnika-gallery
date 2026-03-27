@@ -344,14 +344,13 @@ const About = () => {
             )}
             style={{ transitionDelay: "200ms" }}
           >
-            <Link to="/collections">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-pastel-pink to-pastel-lavender hover:opacity-90 text-white font-medium px-8 py-6 text-lg rounded-full shadow-soft hover:shadow-md transition-all duration-300"
-              >
-                Explore Designs
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              asChild
+              className="bg-gradient-to-r from-pastel-pink to-pastel-lavender hover:opacity-90 text-white font-medium px-8 py-6 text-lg rounded-full shadow-soft hover:shadow-md transition-all duration-300"
+            >
+              <Link to="/collections">Explore Designs</Link>
+            </Button>
           </div>
         </div>
       </section>

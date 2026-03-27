@@ -226,11 +226,9 @@ const GalleryGrid = () => {
 
         {/* View All CTA */}
         <div className="text-center mt-16">
-          <Link to="/collections">
-            <Button variant="artisan" size="xl" className="button-glow">
-              View All Collections
-            </Button>
-          </Link>
+          <Button variant="artisan" size="xl" className="button-glow" asChild>
+            <Link to="/collections">View All Collections</Link>
+          </Button>
         </div>
       </div>
     </section>

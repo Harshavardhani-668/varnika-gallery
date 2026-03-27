@@ -147,6 +147,7 @@ const Testimonials = () => {
               variant="ghost"
               size="icon"
               onClick={prev}
+              aria-label="Show previous testimonial"
               className="text-primary-foreground/50 hover:text-primary-foreground hover:bg-primary-foreground/10"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -157,6 +158,7 @@ const Testimonials = () => {
                 <button
                   key={index}
                   onClick={() => setCurrentIndex(index)}
+                  aria-label={`Show testimonial ${index + 1}`}
                   className={cn(
                     "h-1.5 rounded-full transition-all duration-500",
                     index === currentIndex
@@ -171,6 +173,7 @@ const Testimonials = () => {
               variant="ghost"
               size="icon"
               onClick={next}
+              aria-label="Show next testimonial"
               className="text-primary-foreground/50 hover:text-primary-foreground hover:bg-primary-foreground/10"
             >
               <ChevronRight className="w-5 h-5" />

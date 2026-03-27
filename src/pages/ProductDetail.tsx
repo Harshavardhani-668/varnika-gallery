@@ -334,9 +334,7 @@ const ProductDetail = () => {
             <p className="text-muted-foreground mb-8 font-body">
               The piece you're looking for doesn't exist or has been removed.
             </p>
-            <Link to="/collections">
-              <Button variant="outline">Browse Collection</Button>
-            </Link>
+            <Button variant="outline" asChild><Link to="/collections">Browse Collection</Link></Button>
           </div>
         </main>
         <Footer />
@@ -517,24 +515,35 @@ const ProductDetail = () => {
                 {/* Primary Actions */}
                 <div className="flex flex-col gap-3">
                   <Button
+                    variant="artisan"
+                    size="xl"
+                    className="w-full rounded-xl button-glow"
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0 || addingToCart}
+                  >
+                    <ShoppingBag className="w-5 h-5 mr-2" />
+                    {product.stock === 0 ? "Join Waitlist" : addingToCart ? "Adding..." : "Add to Cart"}
+                  </Button>
+
+                  <Button
                     variant="outline"
                     size="xl"
                     className="w-full rounded-xl"
                     onClick={handleBuyNow}
                     disabled={product.stock === 0 || addingToCart}
                   >
-                    <ShoppingBag className="w-5 h-5 mr-2" />
-                    {product.stock === 0 ? "Join Waitlist" : addingToCart ? "Processing..." : "Buy Standard"}
+                    <Zap className="w-5 h-5 mr-2" />
+                    {product.stock === 0 ? "Join Waitlist" : addingToCart ? "Processing..." : "Buy Now"}
                   </Button>
 
                   <Button
                     size="xl"
                     className="w-full bg-gold hover:bg-gold-light text-foreground font-body font-semibold text-base button-glow"
                     onClick={() => navigate(`/customize/${product.id}`)}
-                    disabled={product.stock === 0}
+                    disabled={product.stock === 0 || addingToCart}
                   >
                     <Zap className="w-5 h-5 mr-2" />
-                    {product.stock === 0 ? "Join Waitlist" : "Customize This Product"}
+                    {product.stock === 0 ? "Join Waitlist" : addingToCart ? "Please wait..." : "Customize This Product"}
                   </Button>
                 </div>
 
@@ -577,7 +586,7 @@ const ProductDetail = () => {
 
               {/* Specifications */}
               <div className="mt-8 pt-8 border-t border-border">
-                <h3 className="font-display text-lg text-foreground mb-4">Details</h3>
+                <h2 className="font-display text-lg text-foreground mb-4">Details</h2>
                 <dl className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <dt className="text-muted-foreground font-body">Category</dt>
@@ -881,7 +890,7 @@ const ProductDetail = () => {
             disabled={product.stock === 0 || addingToCart}
           >
             <ShoppingBag className="w-4 h-4 mr-2" />
-            Add to Cart
+            {addingToCart ? "Adding..." : "Add to Cart"}
           </Button>
           <Button
             size="lg"
@@ -890,7 +899,7 @@ const ProductDetail = () => {
             disabled={product.stock === 0 || addingToCart}
           >
             <Zap className="w-4 h-4 mr-2" />
-            Buy Now
+            {addingToCart ? "Processing..." : "Buy Now"}
           </Button>
         </div>
       </div>

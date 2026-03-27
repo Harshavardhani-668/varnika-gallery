@@ -34,12 +34,12 @@ const FinalCTA = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/collections">
-              <Button variant="reserve" size="xl" className="group min-w-[220px]">
+            <Button variant="reserve" size="xl" className="group w-full sm:w-auto min-w-0 sm:min-w-[220px]" asChild>
+              <Link to="/collections" className="w-full sm:w-auto">
                 Start Custom Order
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           <p className="font-body text-primary-foreground/40 text-sm mt-8">

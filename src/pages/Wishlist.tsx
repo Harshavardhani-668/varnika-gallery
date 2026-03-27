@@ -33,9 +33,9 @@ const Wishlist = () => {
                 <Heart className="w-16 h-16 text-muted mx-auto mb-4" />
                 <h2 className="font-display text-2xl text-foreground mb-2">Your wishlist is empty</h2>
                 <p className="text-muted-foreground mb-6 font-body">Save items you love to revisit them later.</p>
-                <Link to="/collections">
-                  <Button variant="artisan" className="button-glow">Browse Collections</Button>
-                </Link>
+                <Button variant="artisan" className="button-glow" asChild>
+                  <Link to="/collections">Browse Collections</Link>
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -46,8 +46,9 @@ const Wishlist = () => {
                     <div className="aspect-[3/4] overflow-hidden">
                       <img
                         src={item.product_image || "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=800&fit=crop"}
-                        alt={item.product_name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        alt={`${item.product_name} handmade gift product image`}
+                        loading="lazy"
+                        className="w-full h-full max-w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
                   </Link>
@@ -58,7 +59,7 @@ const Wishlist = () => {
                       <Button size="sm" variant="artisan" className="flex-1 text-xs" onClick={() => handleMoveToCart(item)}>
                         <ShoppingBag className="w-3.5 h-3.5 mr-1" /> Move to Cart
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeFromWishlist(item.product_id)}>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeFromWishlist(item.product_id)} aria-label={`Remove ${item.product_name} from wishlist`}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>

@@ -21,9 +21,14 @@ const AdminOrders = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendEmailFor, setSendEmailFor] = useState<string | null>(null);
   const { toast } = useToast();
+  const logDevError = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+      console.error(...args);
+    }
+  };
 
   const fetchOrders = () => {
-    getAllOrders().then(d => setOrders(d.orders)).catch(console.error);
+    getAllOrders().then(d => setOrders(d.orders)).catch((error) => logDevError(error));
   };
 
   useEffect(() => { fetchOrders(); }, []);
@@ -69,7 +74,7 @@ const AdminOrders = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" asChild><Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
+          <Button variant="ghost" size="icon" asChild aria-label="Back to admin dashboard"><Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
           <h1 className="font-display text-3xl font-bold text-foreground">Orders Management</h1>
         </div>
 

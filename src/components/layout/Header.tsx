@@ -92,9 +92,9 @@ const Header = () => {
         <div className="varnika-container">
           <nav className="flex items-center justify-between">
             <Link to="/" className="relative z-10">
-              <h1 className="font-display text-2xl md:text-3xl tracking-wide text-foreground">
+              <span className="font-display text-2xl md:text-3xl tracking-wide text-foreground block">
                 Varnika
-              </h1>
+              </span>
               <span className="hidden md:block text-[10px] tracking-[0.2em] text-muted-foreground uppercase mt-0.5 font-body">
                 Handcrafted with Heart
               </span>
@@ -115,39 +115,39 @@ const Header = () => {
 
             <div className="flex items-center gap-1.5">
               {/* Search */}
-              <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => setIsSearchOpen(true)}>
+              <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => setIsSearchOpen(true)} aria-label="Open search">
                 <Search className="w-5 h-5 text-muted-foreground" />
               </Button>
 
               {/* Wishlist */}
-              <Link to="/wishlist" className="relative">
-                <Button variant="ghost" size="icon" className="hidden md:flex">
+              <Button variant="ghost" size="icon" className="hidden md:flex relative" asChild aria-label="Open wishlist">
+                <Link to="/wishlist">
                   <Heart className="w-5 h-5 text-muted-foreground" />
                   {wishlistCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-terracotta text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                       {wishlistCount}
                     </span>
                   )}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
 
               {/* Cart */}
-              <Link to="/cart" className="relative">
-                <Button variant="ghost" size="icon" className="hidden md:flex">
+              <Button variant="ghost" size="icon" className="hidden md:flex relative" asChild aria-label="Open cart">
+                <Link to="/cart">
                   <ShoppingBag className="w-5 h-5 text-muted-foreground" />
                   {cartCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-gold text-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                       {cartCount}
                     </span>
                   )}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
               
               {/* User */}
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="hidden md:flex rounded-full">
+                    <Button variant="ghost" size="icon" className="hidden md:flex rounded-full" aria-label="Open account menu">
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={user.user_metadata?.avatar_url} />
                         <AvatarFallback className="bg-gold/20 text-foreground text-sm font-body">
@@ -183,11 +183,9 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link to="/login">
-                  <Button variant="ghost" size="sm" className="hidden md:flex font-body">
-                    <User className="w-4 h-4 mr-2" />Sign In
-                  </Button>
-                </Link>
+                <Button variant="ghost" size="sm" className="hidden md:flex font-body" aria-label="Sign in" asChild>
+                  <Link to="/login"><User className="w-4 h-4 mr-2" />Sign In</Link>
+                </Button>
               )}
               
               <Button
@@ -195,6 +193,7 @@ const Header = () => {
                 size="icon"
                 className="lg:hidden"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
               >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </Button>
@@ -221,45 +220,45 @@ const Header = () => {
               ))}
 
               <div className="flex items-center gap-6 mt-6">
-                <Button variant="ghost" size="icon" onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}>
+                <Button variant="ghost" size="icon" onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }} aria-label="Open search">
                   <Search className="w-6 h-6" />
                 </Button>
-                <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="icon" className="relative">
+                <Button variant="ghost" size="icon" className="relative" asChild aria-label="Open wishlist">
+                  <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)}>
                     <Heart className="w-6 h-6" />
                     {wishlistCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-5 h-5 bg-terracotta text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                         {wishlistCount}
                       </span>
                     )}
-                  </Button>
-                </Link>
-                <Link to="/cart" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="icon" className="relative">
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" className="relative" asChild aria-label="Open cart">
+                  <Link to="/cart" onClick={() => setIsMobileMenuOpen(false)}>
                     <ShoppingBag className="w-6 h-6" />
                     {cartCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold text-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                         {cartCount}
                       </span>
                     )}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 {user ? (
                   <>
-                    <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button variant="ghost" size="icon"><User className="w-6 h-6" /></Button>
-                    </Link>
-                    <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button variant="ghost" size="icon"><Package className="w-6 h-6" /></Button>
-                    </Link>
-                    <Button variant="ghost" size="icon" onClick={() => { setIsMobileMenuOpen(false); handleSignOut(); }}>
+                    <Button variant="ghost" size="icon" asChild aria-label="Open account dashboard">
+                      <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}><User className="w-6 h-6" /></Link>
+                    </Button>
+                    <Button variant="ghost" size="icon" asChild aria-label="Open orders">
+                      <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)}><Package className="w-6 h-6" /></Link>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setIsMobileMenuOpen(false); handleSignOut(); }} aria-label="Sign out">
                       <LogOut className="w-6 h-6" />
                     </Button>
                   </>
                 ) : (
-                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="ghost" size="icon"><User className="w-6 h-6" /></Button>
-                  </Link>
+                  <Button variant="ghost" size="icon" asChild aria-label="Sign in">
+                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}><User className="w-6 h-6" /></Link>
+                  </Button>
                 )}
               </div>
             </div>

@@ -60,12 +60,12 @@ const BestSellers = () => {
               Best Sellers
             </h2>
           </div>
-          <Link to="/collections" className="hidden md:block">
-            <Button variant="ghost" className="text-gold hover:text-foreground group">
+          <Button variant="ghost" className="hidden md:inline-flex text-gold hover:text-foreground group" asChild>
+            <Link to="/collections">
               View All
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Horizontal scroll */}
@@ -75,12 +75,12 @@ const BestSellers = () => {
               key={product.id}
               to={`/product/${product.id}`}
               className={cn(
-                "min-w-[240px] sm:min-w-[260px] snap-start group flex-shrink-0 transition-all duration-700 ease-boutique",
+                "min-w-[240px] sm:min-w-[260px] snap-start group flex-shrink-0 transition-all duration-700 ease-boutique rounded-2xl",
                 reveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
               )}
               style={{ transitionDelay: `${(i + 1) * 80}ms` }}
             >
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark mb-3">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark mb-3 border border-border/60 group-hover:border-gold/40 transition-all duration-500 group-hover:shadow-elevated">
                 <OptimizedImage
                   src={product.imageUrl}
                   alt={product.name}
@@ -155,12 +155,12 @@ const BestSellers = () => {
 
         {/* Mobile View All */}
         <div className="mt-8 text-center md:hidden">
-          <Link to="/collections">
-            <Button variant="artisan" size="lg" className="button-glow">
+          <Button variant="artisan" size="lg" className="button-glow" asChild>
+            <Link to="/collections">
               View All Products
               <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

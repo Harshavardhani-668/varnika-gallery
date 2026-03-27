@@ -85,9 +85,9 @@ const Cart = () => {
                 <p className="text-muted-foreground mb-6 font-body">
                   Start adding some handmade treasures!
                 </p>
-                <Link to="/collections">
-                  <Button variant="artisan" className="button-glow">Browse Collections</Button>
-                </Link>
+                <Button variant="artisan" className="button-glow" asChild>
+                  <Link to="/collections">Browse Collections</Link>
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -101,8 +101,9 @@ const Cart = () => {
                           <Link to={`/product/${item.product_id}`}>
                             <img
                               src={item.product_image}
-                              alt={item.product_name}
-                              className="w-24 h-24 object-cover rounded-xl"
+                              alt={`${item.product_name} handmade gift product image`}
+                              loading="lazy"
+                              className="w-24 h-24 max-w-full object-cover rounded-xl"
                             />
                           </Link>
                         )}
@@ -122,6 +123,7 @@ const Cart = () => {
                                 size="sm" variant="outline"
                                 onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                                 className="h-8 w-8 p-0"
+                                aria-label={`Decrease quantity for ${item.product_name}`}
                               >
                                 <Minus className="w-4 h-4" />
                               </Button>
@@ -132,6 +134,7 @@ const Cart = () => {
                                 size="sm" variant="outline"
                                 onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                                 className="h-8 w-8 p-0"
+                                aria-label={`Increase quantity for ${item.product_name}`}
                               >
                                 <Plus className="w-4 h-4" />
                               </Button>

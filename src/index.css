@@ -114,10 +114,23 @@
 
   html {
     scroll-behavior: smooth;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -127,7 +140,7 @@
 
 @layer components {
   .varnika-container {
-    @apply max-w-7xl mx-auto px-6 lg:px-8;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
   .text-gradient-gold {

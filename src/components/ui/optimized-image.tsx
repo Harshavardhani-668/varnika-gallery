@@ -76,12 +76,12 @@ const OptimizedImage = ({
 
       <img
         src={optimizedSrc}
-        alt={alt}
-        loading={eager ? "eager" : "lazy"}
-        fetchPriority={eager ? "high" : "low"}
+        alt={alt || "Varnika handmade gift product image"}
+        loading="lazy"
+        fetchPriority="low"
         decoding="async"
         className={cn(
-          "transition-opacity duration-300",
+          "max-w-full transition-opacity duration-300",
           isLoaded || hasError ? "opacity-100" : "opacity-0",
           className
         )}

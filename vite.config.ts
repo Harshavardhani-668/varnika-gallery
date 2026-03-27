@@ -11,4 +11,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    minify: "esbuild",
+    cssMinify: true,
+    sourcemap: false,
+    target: "es2020",
+    rollupOptions: {
+      treeshake: true,
+    },
+  },
 }));

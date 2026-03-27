@@ -43,13 +43,18 @@ const AdminProducts = () => {
   const [form, setForm] = useState({ ...emptyProduct });
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  const logDevError = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+      console.error(...args);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
       const data = await adminFetch('all_products');
       setProducts(data.products || []);
     } catch (err: any) {
-      console.error(err);
+      logDevError(err);
     }
   };
 
@@ -169,7 +174,7 @@ const AdminProducts = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild><Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
+            <Button variant="ghost" size="icon" asChild aria-label="Back to admin dashboard"><Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
             <h1 className="font-display text-3xl font-bold text-foreground">Products ({products.length})</h1>
           </div>
           <div className="flex items-center gap-2">
@@ -207,7 +212,7 @@ const AdminProducts = () => {
                       <TableRow key={p.id}>
                         <TableCell>
                           {p.image_url_1 ? (
-                            <img src={p.image_url_1} alt={p.product_name} className="w-12 h-12 rounded object-cover" />
+                            <img src={p.image_url_1} alt={`${p.product_name} handmade gift product image`} loading="lazy" className="w-12 h-12 max-w-full rounded object-cover" />
                           ) : (
                             <div className="w-12 h-12 rounded bg-muted" />
                           )}
