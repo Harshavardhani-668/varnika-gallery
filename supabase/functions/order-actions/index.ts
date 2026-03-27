@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 function json(data: unknown, status = 200) {
@@ -12,7 +13,15 @@ function json(data: unknown, status = 200) {
   });
 }
 
-const CANCELLABLE_STATUSES = ["pending", "processing", "confirmed"];
+const CANCELLABLE_STATUSES = ["pending", "processing", "confirmed", "placed"];
+
+function getBearerToken(authHeader: string | null) {
+  if (!authHeader) return null;
+  const [scheme, token] = authHeader.split(" ");
+  if (!scheme || !token) return null;
+  if (scheme.toLowerCase() !== "bearer") return null;
+  return token.trim();
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -24,16 +33,16 @@ Deno.serve(async (req) => {
     // ===== STEP 1: Validate environment variables =====
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
-    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+    if (!supabaseUrl || !serviceRoleKey) {
       console.error("Missing Supabase credentials");
       return json({ error: "Internal server error: missing configuration" }, 500);
     }
 
     // ===== STEP 2: Validate authentication header =====
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    const accessToken = getBearerToken(authHeader);
+    if (!accessToken) {
       return json({ error: "Unauthorized: missing Authorization header" }, 401);
     }
 
@@ -50,18 +59,21 @@ Deno.serve(async (req) => {
       return json({ error: "Invalid request body: must be a JSON object" }, 400);
     }
 
-    const { action, orderId, reason } = body;
+    const action = String(body?.action || "").trim();
+    const orderId = body?.orderId ?? body?.order_id;
+    const reason = body?.reason ?? body?.cancellationReason ?? body?.cancellation_reason;
 
     // Validate action
     if (!action) {
       return json({ error: "Missing required field: action" }, 400);
     }
-    if (action !== "cancel_order") {
+    if (!["cancel_order", "cancel-order", "cancel"].includes(action)) {
       return json({ error: `Invalid action: '${action}'. Only 'cancel_order' is supported.` }, 400);
     }
 
     // Validate orderId
-    if (!orderId || typeof orderId !== "string") {
+    const normalizedOrderId = String(orderId || "").trim();
+    if (!normalizedOrderId) {
       return json({ error: "Missing or invalid required field: orderId (must be string)" }, 400);
     }
 
@@ -71,11 +83,9 @@ Deno.serve(async (req) => {
     }
 
     // ===== STEP 4: Authenticate user =====
-    const supabaseUser = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
 
     if (authError) {
       console.error("Auth error:", authError.message);
@@ -86,13 +96,12 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized: invalid user token" }, 401);
     }
 
-    // ===== STEP 5: Initialize admin client and fetch order =====
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    // ===== STEP 5: Fetch order =====
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .select("id, user_id, status, shipping_address, order_number")
-      .eq("id", orderId)
+      .eq("id", normalizedOrderId)
       .maybeSingle();
 
     if (orderError) {
@@ -106,7 +115,7 @@ Deno.serve(async (req) => {
     }
 
     if (order.user_id !== user.id) {
-      console.warn(`User ${user.id} attempted to cancel order ${orderId} owned by ${order.user_id}`);
+      console.warn(`User ${user.id} attempted to cancel order ${normalizedOrderId} owned by ${order.user_id}`);
       return json({ error: "Forbidden: order does not belong to this user" }, 403);
     }
 
@@ -114,7 +123,17 @@ Deno.serve(async (req) => {
     const currentStatus = String(order.status || "").toLowerCase().trim();
 
     if (currentStatus === "cancelled") {
-      return json({ error: "Order already cancelled" }, 400);
+      return json({
+        success: true,
+        message: "Order already cancelled",
+        order: {
+          id: order.id,
+          order_number: order.order_number,
+          status: order.status,
+          cancelled_at: order.shipping_address?.cancelled_at,
+          cancellation_reason: order.shipping_address?.cancellation_reason,
+        },
+      }, 200);
     }
 
     if (!CANCELLABLE_STATUSES.includes(currentStatus)) {
@@ -124,23 +143,30 @@ Deno.serve(async (req) => {
     }
 
     // ===== STEP 7: Update order to cancelled =====
+    const existingShippingAddress =
+      order.shipping_address && typeof order.shipping_address === "object" && !Array.isArray(order.shipping_address)
+        ? order.shipping_address
+        : {};
+
     const nextShippingAddress = {
-      ...(order.shipping_address || {}),
+      ...existingShippingAddress,
       cancellation_reason: String(reason).trim(),
       cancelled_at: new Date().toISOString(),
     };
+
+    const nowIso = new Date().toISOString();
 
     const { data: updatedOrder, error: updateError } = await supabaseAdmin
       .from("orders")
       .update({
         status: "cancelled",
         shipping_address: nextShippingAddress,
-        updated_at: new Date().toISOString(),
+        updated_at: nowIso,
       })
-      .eq("id", orderId)
+      .eq("id", normalizedOrderId)
       .eq("user_id", user.id)
       .select("id, order_number, status, shipping_address, total_amount")
-      .single();
+      .maybeSingle();
 
     if (updateError) {
       console.error("Order update error:", updateError.message);
@@ -148,12 +174,43 @@ Deno.serve(async (req) => {
     }
 
     if (!updatedOrder) {
-      console.error("Updated order not returned after update");
-      return json({ error: "Order was not updated properly" }, 500);
+      // Defensive fallback for cases where UPDATE succeeds but rows are not returned.
+      const { data: reloadedOrder, error: reloadError } = await supabaseAdmin
+        .from("orders")
+        .select("id, order_number, status, shipping_address, total_amount")
+        .eq("id", normalizedOrderId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (reloadError) {
+        console.error("Order reload error after update:", reloadError.message);
+        return json({ error: `Failed to verify cancelled order: ${reloadError.message}` }, 500);
+      }
+
+      if (!reloadedOrder || String(reloadedOrder.status || "").toLowerCase() !== "cancelled") {
+        console.error("Order update returned no row and cancellation could not be verified", {
+          orderId: normalizedOrderId,
+          userId: user.id,
+        });
+        return json({ error: "Order was not updated properly" }, 500);
+      }
+
+      console.log(`Order ${normalizedOrderId} cancelled by user ${user.id} (verified by reload)`);
+      return json({
+        success: true,
+        message: "Order cancelled successfully",
+        order: {
+          id: reloadedOrder.id,
+          order_number: reloadedOrder.order_number,
+          status: reloadedOrder.status,
+          cancelled_at: reloadedOrder.shipping_address?.cancelled_at,
+          cancellation_reason: reloadedOrder.shipping_address?.cancellation_reason,
+        },
+      }, 200);
     }
 
     // ===== STEP 8: Successful response =====
-    console.log(`Order ${orderId} cancelled by user ${user.id}`);
+    console.log(`Order ${normalizedOrderId} cancelled by user ${user.id}`);
     return json({
       success: true,
       message: "Order cancelled successfully",
