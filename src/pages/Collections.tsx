@@ -8,11 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useProducts, useCategories } from "@/hooks/useProducts";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import { useScrollReveal, useStaggeredReveal } from "@/hooks/useAnimations";
 import FloatingClouds from "@/components/effects/FloatingClouds";
 import OptimizedImage from "@/components/ui/optimized-image";
 
 const Collections = () => {
+    usePageMeta({
+      title: "Collections - Handmade Gifts & Custom Hampers | Varnika",
+      description: "Browse Varnika's curated collections of handmade gifts. Shop personalized hampers, custom gift sets, and artisan crafts by occasion.",
+      keywords: "collections, handmade gifts, custom hampers, gift sets, artisan crafts, personalized gifts"
+    });
   const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");

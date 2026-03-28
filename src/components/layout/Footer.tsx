@@ -61,13 +61,26 @@ const Footer = () => {
           <div>
             <h3 className="font-display text-lg mb-6 text-gold">Support</h3>
             <ul className="space-y-3">
-              {["Custom Orders", "Shipping Info", "Returns", "FAQ"].map((item) =>
-              <li key={item}>
-                  <Link to="/contact" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors duration-300 text-sm font-body">
-                    {item}
-                  </Link>
-                </li>
-              )}
+              <li>
+                <Link to="/contact" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors duration-300 text-sm font-body">
+                  Custom Orders
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors duration-300 text-sm font-body">
+                  Shipping Info
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors duration-300 text-sm font-body">
+                  Returns
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="text-primary-foreground/70 hover:text-primary-foreground transition-colors duration-300 text-sm font-body">
+                  FAQ
+                </Link>
+              </li>
             </ul>
           </div>
 

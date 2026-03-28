@@ -17,6 +17,10 @@ const Collections = lazy(() => import("./pages/Collections"));
 const Gallery = lazy(() => import("./pages/Gallery"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const GiftsIndia = lazy(() => import("./pages/GiftsIndia"));
+const GiftsWorldwide = lazy(() => import("./pages/GiftsWorldwide"));
+const GiftGuides = lazy(() => import("./pages/GiftGuides"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
@@ -113,6 +117,10 @@ const App = () => (
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/gifts-india" element={<GiftsIndia />} />
+              <Route path="/gifts-worldwide" element={<GiftsWorldwide />} />
+              <Route path="/gift-guides" element={<GiftGuides />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/login" element={<Login />} />

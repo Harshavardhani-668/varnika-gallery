@@ -8,8 +8,15 @@ import OptimizedImage from "@/components/ui/optimized-image";
 import { cn } from "@/lib/utils";
 import { useScrollReveal } from "@/hooks/useAnimations";
 import { useProducts } from "@/hooks/useProducts";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const About = () => {
+  usePageMeta({
+    title: "About Varnika - Handmade Gifts with Heart | 100% Artisan",
+    description: "Learn about Varnika: 100% handmade gifts crafted with love. We support local artisans, create unique personalized gifts, and believe in sustainable craftsmanship.",
+    keywords: "about varnika, handmade gifts India, artisan gifts, ethical shopping, support local artisans"
+  });
+
   const { data: products } = useProducts();
   const heroReveal = useScrollReveal<HTMLElement>({ threshold: 0.2 });
   const storyReveal = useScrollReveal<HTMLElement>({ threshold: 0.2 });

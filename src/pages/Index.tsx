@@ -8,6 +8,7 @@ const TrustStrip = lazy(() => import("@/components/home/TrustStrip"));
 const ShopByOccasion = lazy(() => import("@/components/home/ShopByOccasion"));
 const HowItWorks = lazy(() => import("@/components/home/HowItWorks"));
 const GalleryGrid = lazy(() => import("@/components/home/GalleryGrid"));
+const Testimonials = lazy(() => import("@/components/home/Testimonials"));
 const InstagramSection = lazy(() => import("@/components/home/InstagramSection"));
 const FinalCTA = lazy(() => import("@/components/home/FinalCTA"));
 const Newsletter = lazy(() => import("@/components/home/Newsletter"));
@@ -26,6 +27,7 @@ const Index = () => {
           <ShopByOccasion />
           <HowItWorks />
           <GalleryGrid />
+          <Testimonials />
           <InstagramSection />
           <FinalCTA />
           <Newsletter />

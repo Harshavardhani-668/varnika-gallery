@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProducts";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import { useScrollReveal, useStaggeredReveal } from "@/hooks/useAnimations";
 import FloatingClouds from "@/components/effects/FloatingClouds";
 
 const Gallery = () => {
+    usePageMeta({
+      title: "Gallery - Handmade Crafts & Custom Gifts | Varnika",
+      description: "Explore Varnika's gallery of unique handmade gifts. See our latest artisan creations, personalized crafts, and custom hampers.",
+      keywords: "gift gallery, handmade crafts, custom creations, artisan gallery, unique gifts"
+    });
   const { data: products, isLoading } = useProducts();
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
   const headerReveal = useScrollReveal<HTMLDivElement>();

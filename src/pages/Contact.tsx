@@ -9,8 +9,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Phone, Instagram, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import FloatingClouds from "@/components/effects/FloatingClouds";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Contact = () => {
+  usePageMeta({
+    title: "Contact Varnika - Get in Touch | Handmade Gifts Support",
+    description: "Contact Varnika for custom gift inquiries, bulk orders, or support. Phone, email, Instagram. We respond within 24 hours.",
+    keywords: "contact varnika, customer support, bulk orders, custom gifts, handmade gifts contact"
+  });
+
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
 
