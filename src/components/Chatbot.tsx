@@ -184,7 +184,11 @@ const Chatbot = () => {
       };
     }
 
-    return null;
+    return {
+      content:
+        "I can help you quickly 😊 Tell me the occasion and budget, and I will suggest the best options. Here are some popular picks to start.",
+      products: toChatProducts(findProducts("gift")),
+    };
   };
 
   const handleUserMessage = async (rawText: string) => {
@@ -202,7 +206,11 @@ const Chatbot = () => {
     setIsLoading(true);
 
     const localReply = buildSmartReply(trimmed);
-    if (localReply) {
+
+    // For clear shopping intents, respond instantly with local product recommendations.
+    if (
+      /birthday|anniversary|festival|diwali|rakhi|budget|gift|surprise|under\s*\d+/i.test(trimmed)
+    ) {
       await typeAssistantMessage(localReply);
       setIsLoading(false);
       return;
@@ -223,6 +231,7 @@ const Chatbot = () => {
         content:
           data?.reply ||
           "I can help with gift ideas 🌸 Tell me the occasion, budget, and who you are buying for.",
+        products: localReply.products,
       });
     } catch (error) {
       if (import.meta.env.DEV) {
@@ -230,7 +239,8 @@ const Chatbot = () => {
       }
       await typeAssistantMessage({
         content:
-          "Sorry, I had a tiny connection issue 💫 Please try again. Meanwhile, share your budget and occasion and I will suggest options.",
+          "No worries 💫 I can still help right away. Share your budget and occasion, and I will suggest the best Varnika picks.",
+        products: localReply.products,
       });
     } finally {
       setIsLoading(false);
